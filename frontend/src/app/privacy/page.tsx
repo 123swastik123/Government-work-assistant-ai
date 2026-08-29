@@ -60,7 +60,7 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-3">Third-party services</h2>
           <ul className="list-disc pl-5 space-y-1">
             <li>Supabase — database and authentication</li>
-            <li>Anthropic Claude — AI guidance (messages are sent to Claude API; Anthropic's privacy policy applies)</li>
+            <li>Google Gemini AI — AI guidance and reasoning (Google's AI privacy policy applies)</li>
             <li>Sentry — error monitoring (sanitized, no PII)</li>
             <li>Vercel — hosting</li>
           </ul>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { ChatRequestSchema } from "@/lib/validation/schemas";
-import { callClaude } from "@/lib/ai/claude-client";
+import { generateAIResponse } from "@/lib/ai/provider";
 import { evaluateEligibility, getApplicableDocuments } from "@/lib/ai/eligibility-engine";
 import { runKeywordPipeline } from "@/lib/ai/matching-pipeline";
 import { buildServiceContext } from "@/lib/ai/system-prompt";
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
     }
 
     const clientId = user?.id ?? guest_session_id ?? "anonymous";
-    const claudeResult = await callClaude({
+    const aiResult = await generateAIResponse({
       payload: {
         userProfile,
         serviceContext: serviceCtx,
@@ -149,10 +149,10 @@ export async function POST(req: NextRequest) {
       clientId,
     });
 
-    if (claudeResult.rateLimited) {
+    if (aiResult.rateLimited) {
       return NextResponse.json({ success: false, error: "Too many requests." }, { status: 429 });
     }
-    const aiResponse = claudeResult.response!;
+    const aiResponse = aiResult.response!;
 
     if (aiResponse.matched_service_id) {
       const isValid = getSeededServices().some((s) => s.id === aiResponse.matched_service_id);
