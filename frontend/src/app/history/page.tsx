@@ -17,5 +17,11 @@ export default async function HistoryPage() {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  return <HistoryClient history={history ?? []} />;
+  // Normalise joined records
+  const normalised = (history ?? []).map((h) => ({
+    ...h,
+    service: Array.isArray(h.service) ? (h.service[0] ?? null) : h.service,
+  }));
+
+  return <HistoryClient history={normalised} />;
 }

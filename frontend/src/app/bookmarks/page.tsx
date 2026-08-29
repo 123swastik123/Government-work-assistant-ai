@@ -16,5 +16,11 @@ export default async function BookmarksPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  return <BookmarksClient bookmarks={bookmarks ?? []} />;
+  // Supabase returns joined records as arrays; normalise to single object
+  const normalised = (bookmarks ?? []).map((b) => ({
+    ...b,
+    service: Array.isArray(b.service) ? b.service[0] : b.service,
+  }));
+
+  return <BookmarksClient bookmarks={normalised} />;
 }
