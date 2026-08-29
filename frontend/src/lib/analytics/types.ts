@@ -1,0 +1,18 @@
+export type AnalyticsEvent =
+  | "personalization_started"
+  | "personalization_completed"
+  | "personalization_skipped"
+  | "search_started"
+  | "service_matched"
+  | "service_viewed"
+  | "eligibility_completed"
+  | "document_checklist_viewed"
+  | "pdf_generated"
+  | "official_portal_clicked"
+  | "service_saved"
+  | "service_bookmarked"
+  | "unmatched_request_submitted"
+  | "assistant_opened"
+  | "assistant_navigated"
+  | "auth_started"
+  | "auth_completed";

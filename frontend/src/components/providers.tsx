@@ -1,0 +1,104 @@
+"use client";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { getOrCreateGuestSession, saveGuestSession } from "@/lib/session/guest";
+import type { User } from "@supabase/supabase-js";
+import type { GuestProfile, Language } from "@/types";
+
+const ONBOARDING_KEY = "gwh_onboarding_done";
+
+interface AppContextValue {
+  user: User | null;
+  guestProfile: GuestProfile;
+  updateGuestProfile: (updates: Partial<GuestProfile>) => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  isLoading: boolean;
+  hasOnboarded: boolean;
+  markOnboarded: () => void;
+  resetOnboarding: () => void;
+}
+
+const AppContext = createContext<AppContextValue | null>(null);
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [guestProfile, setGuestProfile] = useState<GuestProfile>(() => getOrCreateGuestSession());
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasOnboarded, setHasOnboarded] = useState(true); // default true, set false after mount check
+
+  // Check onboarding status on mount
+  useEffect(() => {
+    try {
+      const done = localStorage.getItem(ONBOARDING_KEY);
+      setHasOnboarded(done === "true");
+    } catch {
+      setHasOnboarded(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setIsLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const updateGuestProfile = useCallback((updates: Partial<GuestProfile>) => {
+    setGuestProfile((prev) => {
+      const updated = { ...prev, ...updates };
+      saveGuestSession(updated);
+      return updated;
+    });
+  }, []);
+
+  const setLanguage = useCallback((lang: Language) => {
+    updateGuestProfile({ language: lang });
+    if (user) {
+      fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: lang }),
+      }).catch(console.warn);
+    }
+  }, [updateGuestProfile, user]);
+
+  const markOnboarded = useCallback(() => {
+    try { localStorage.setItem(ONBOARDING_KEY, "true"); } catch { /* ignore */ }
+    setHasOnboarded(true);
+  }, []);
+
+  const resetOnboarding = useCallback(() => {
+    try { localStorage.removeItem(ONBOARDING_KEY); } catch { /* ignore */ }
+    setHasOnboarded(false);
+  }, []);
+
+  const language: Language = guestProfile.language ?? "en";
+
+  return (
+    <AppContext.Provider value={{
+      user,
+      guestProfile,
+      updateGuestProfile,
+      language,
+      setLanguage,
+      isLoading,
+      hasOnboarded,
+      markOnboarded,
+      resetOnboarding,
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error("useApp must be used within Providers");
+  return ctx;
+}
