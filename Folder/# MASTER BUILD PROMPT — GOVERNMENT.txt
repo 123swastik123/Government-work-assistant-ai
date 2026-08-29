@@ -1,0 +1,3111 @@
+# MASTER BUILD PROMPT — GOVERNMENT WORK HELPER
+
+You are a senior product engineer, UX designer, AI engineer, database architect, security engineer, and DevOps engineer.
+
+Build a complete, production-quality MVP called:
+
+# Government Work Helper
+
+Tagline:
+
+**“Tell us what you need. We’ll show you the path.”**
+
+Core principle:
+
+**Citizen tells us what they need. We figure out the path. The official government system completes the transaction.**
+
+Government Work Helper is a free citizen-guidance platform. It does NOT replace official government portals, does NOT submit government applications, does NOT make government payments, does NOT act as an agent, and does NOT store government credentials.
+
+The product should feel like a **modern AI consumer application**, not like a government website.
+
+It should feel closer to a polished combination of:
+
+* ChatGPT
+* WhatsApp
+* modern productivity software
+* intelligent onboarding
+* a trustworthy civic-information product
+
+Do NOT make it visually resemble a typical government portal.
+
+---
+
+# 1. PRIMARY PRODUCT OBJECTIVE
+
+A citizen should be able to say something like:
+
+> “I want to renew my driving licence.”
+
+or:
+
+> “Mera Aadhaar address change karna hai.”
+
+or:
+
+> “ನನಗೆ income certificate ಬೇಕು.”
+
+The application should understand what the citizen wants and guide them through the correct Karnataka government process.
+
+The citizen should NOT need to know:
+
+* which department handles it
+* which government portal to visit
+* what form number applies
+* which documents are needed
+* whether they appear eligible
+* what order the steps happen in
+
+The system should determine the appropriate path from structured verified service data.
+
+The overall journey:
+
+Citizen problem
+→ personalization
+→ AI understanding
+→ service matching
+→ adaptive questions
+→ deterministic eligibility evaluation
+→ personalized document checklist
+→ fee information
+→ step-by-step instructions
+→ pre-filled PDF where applicable
+→ official government destination
+→ citizen completes transaction
+→ Government Work Helper explains what happens afterward
+→ troubleshooting / next steps
+
+The supplied working-flow document describes this exact journey and the requirement to ultimately send the citizen to the official portal for the transaction. Preserve this principle throughout the implementation.
+
+---
+
+# 2. TECH STACK
+
+Use exactly this architecture unless there is a compelling technical reason otherwise.
+
+## Frontend
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* Modern responsive UI
+* Mobile-first
+* Desktop optimized
+* Accessible components
+* Framer Motion or equivalent lightweight animation library where useful
+
+Use the Next.js App Router.
+
+Use Server Components where appropriate and Client Components where interaction is required.
+
+---
+
+# 3. BACKEND
+
+Use Next.js API routes / Route Handlers.
+
+Do NOT create a separate backend server.
+
+Backend responsibilities:
+
+* AI API calls
+* intent matching
+* pgvector semantic search
+* deterministic eligibility evaluation
+* service-context retrieval
+* personalization/session handling
+* document requirement calculation
+* PDF generation
+* saved services
+* history
+* bookmarks
+* progress tracking
+* unmatched-service requests
+* admin APIs
+* rate limiting
+* validation
+* audit logging
+* security checks
+
+Never trust client-side eligibility calculations.
+
+All trust-critical calculations must happen server-side.
+
+---
+
+# 4. DATABASE
+
+Use Supabase PostgreSQL.
+
+Enable:
+
+* PostgreSQL
+* Supabase Auth
+* Supabase Storage
+* pgvector
+
+Use Row Level Security.
+
+Create proper database migrations.
+
+Do not put important business logic only in frontend code.
+
+---
+
+# 5. AUTHENTICATION
+
+Support:
+
+* Guest users
+* Email OTP
+* Phone OTP
+* Google login
+
+The platform must be fully usable as a guest.
+
+Do NOT force account creation before a citizen can ask a question.
+
+A guest should be able to:
+
+* personalize
+* chat
+* search
+* match services
+* receive guidance
+* view service guides
+* download generated PDFs
+* flag an unmatched request
+
+Guest data should be session-only.
+
+When a user signs in, offer to migrate relevant guest-session data into their account.
+
+---
+
+# 6. PERSONALIZATION — VERY IMPORTANT
+
+Personalization is one of the most important product experiences.
+
+The first meaningful interaction should be a beautiful personalization experience.
+
+It must NOT look like a government form.
+
+It should look like modern AI onboarding.
+
+Use a step-by-step animated experience.
+
+Example:
+
+## Step 1
+
+“Which language feels most comfortable?”
+
+Cards:
+
+English
+हिन्दी
+ಕನ್ನಡ
+
+---
+
+## Step 2
+
+“Where are you getting this work done?”
+
+Karnataka should be preselected.
+
+Allow future states in the data model even though the MVP launches in Karnataka.
+
+---
+
+## Step 3
+
+“What age group are you in?”
+
+Examples:
+
+Under 18
+18–25
+26–35
+36–50
+51–60
+60+
+
+Do not require exact date of birth unless a specific service later genuinely requires it.
+
+---
+
+## Step 4
+
+“What are you here to get done?”
+
+Show broad categories.
+
+Examples:
+
+* Identity & Documents
+* Driving & Transport
+* Certificates
+* Voting
+* Property & Land
+* Tax & Finance
+* Employment & Benefits
+* Family & Marriage
+* Police & Verification
+* Education
+* Health & Disability
+* Business
+* Agriculture
+* Other
+
+The architecture must support expanding this into the top ~50 Karnataka citizen needs and eventually nationwide services.
+
+---
+
+# 7. ADAPTIVE PERSONALIZATION
+
+IMPORTANT:
+
+Do NOT create one generic personalization questionnaire for every service.
+
+The personalization experience must be adaptive.
+
+For example:
+
+If the user selects:
+
+Driving & Transport
+
+the system can move toward:
+
+* Learner's Licence
+* Permanent Driving Licence
+* Renewal
+* Duplicate licence
+* Address/name correction
+* RC services
+
+If the user selects:
+
+Identity & Documents
+
+the system can move toward:
+
+* Aadhaar enrollment
+* Aadhaar update
+* PAN application
+* PAN correction
+* etc.
+
+If the user specifically selects:
+
+Driving Licence Renewal
+
+the subsequent questions should be relevant to driving licence renewal.
+
+If the user selects:
+
+PAN correction
+
+the subsequent questions should be different.
+
+The UI should dynamically render the relevant questions based on the selected service.
+
+Do not ask irrelevant questions.
+
+Do not make the citizen complete a huge generic government-style form.
+
+---
+
+# 8. SKIP PERSONALIZATION
+
+Users MUST be able to skip personalization.
+
+Provide:
+
+“Skip for now”
+
+If skipped:
+
+* use sensible defaults
+* ask only necessary questions later
+* never repeatedly ask the same information
+* allow the user to complete personalization later
+
+Also provide a prominent global search field.
+
+Example:
+
+**“What government work do you need help with?”**
+
+Users can directly search things like:
+
+“driving licence renewal”
+
+“income certificate”
+
+“khata transfer”
+
+“aadhaar address update”
+
+---
+
+# 9. HOMEPAGE
+
+The homepage must feel AI-first.
+
+Do NOT make it look like a directory of 30 government services.
+
+Hero section:
+
+Large conversational interface.
+
+Example:
+
+# What government work do you need help with?
+
+Subtext:
+
+**Tell us in your own words. We’ll figure out the path.**
+
+Large input:
+
+> “I want to renew my driving licence…”
+
+Buttons / chips:
+
+* Driving Licence
+* Aadhaar
+* PAN
+* Certificates
+* Voter ID
+* Property
+* Ration Card
+* View all services
+
+Add a subtle trust statement:
+
+**We explain. The official government system processes.**
+
+Add an official-source trust indicator.
+
+---
+
+# 10. MAIN AI EXPERIENCE
+
+The main website should have a large AI-oriented interface.
+
+However, the persistent AI assistant should ALSO exist globally.
+
+Do not make every page just a chat page.
+
+Instead:
+
+## Main homepage
+
+Large AI chat/search experience.
+
+## Service pages
+
+Normal structured UI.
+
+## Dashboard
+
+Normal structured UI.
+
+## Persistent assistant
+
+Small bottom-right floating AI assistant.
+
+---
+
+# 11. GLOBAL AI ASSISTANT
+
+Every authenticated and guest-accessible page should have a small bottom-right button:
+
+**Ask Government Work Helper**
+
+When clicked, open a compact chat panel.
+
+The assistant should feel like a real in-product assistant.
+
+It can:
+
+* understand natural language
+* explain the current page
+* explain a service
+* answer questions using verified service context
+* ask the next required question
+* navigate within Government Work Helper
+* return the user to a previous screen
+* start over
+* search for a service
+* switch language
+* help complete Government Work Helper's own personalization/questions
+* help populate non-government forms or generated PDFs
+* interpret user-uploaded files where supported
+* explain what information is missing
+* tell the user what happens next
+
+Examples:
+
+> “Take me back two steps.”
+
+> “Show me my driving licence guide.”
+
+> “What documents do I need?”
+
+> “Why am I seeing this question?”
+
+> “Start over.”
+
+> “Change my language to Kannada.”
+
+> “Go back to my dashboard.”
+
+> “What happens after I submit this?”
+
+The assistant can control navigation inside OUR APPLICATION.
+
+It must NOT control or submit government transactions.
+
+---
+
+# 12. AI ASSISTANT ACTION ARCHITECTURE
+
+Implement tool/function calling internally for safe application actions.
+
+Possible internal actions:
+
+* navigate_to_page
+* open_service
+* search_services
+* go_back
+* go_forward
+* reset_flow
+* update_profile
+* set_language
+* set_category
+* answer_question
+* open_documents
+* open_eligibility
+* open_steps
+* open_pdf
+* open_official_portal
+* open_dashboard
+* save_service
+* bookmark_service
+
+Every tool must have explicit authorization and validation.
+
+The AI must never be allowed to execute arbitrary code or arbitrary URLs.
+
+Only allow navigation to whitelisted internal routes.
+
+Official government links must come from the verified database.
+
+---
+
+# 13. FILE UPLOAD
+
+Allow users to upload files where useful.
+
+Examples:
+
+* supporting documents
+* existing forms
+* notices
+* PDFs
+* images
+
+But implement strict privacy protections.
+
+Never ask for:
+
+* passwords
+* OTPs
+* government portal credentials
+* Aadhaar number
+* PAN number
+* other unnecessary sensitive identifiers
+
+Do not automatically store uploaded documents permanently.
+
+Default to temporary processing unless the user explicitly chooses a supported persistent-storage workflow.
+
+Show clear messaging about file handling.
+
+Add:
+
+* file type validation
+* size limits
+* malware/security checks where possible
+* automatic cleanup for temporary files
+* server-side validation
+
+The AI can help interpret an uploaded file for the purpose of guiding the citizen, but it must not turn an uploaded document into an excuse to invent government requirements.
+
+---
+
+# 14. AI RESPONSIBILITY
+
+The AI is the conversational/language layer.
+
+AI CAN:
+
+* understand citizen intent
+* explain verified information
+* ask follow-up questions
+* personalize language
+* simplify government terminology
+* identify the relevant seeded service
+* help navigate the application UI
+* explain deterministic eligibility results
+* explain document requirements already retrieved from the database
+
+AI CANNOT:
+
+* independently decide eligibility
+* invent government rules
+* invent fees
+* invent documents
+* invent government URLs
+* claim something is verified when it isn't
+* submit applications
+* make payments
+* enter OTPs
+* request government credentials
+* request Aadhaar/PAN numbers
+* claim to track government applications
+* pretend to be a government department
+
+---
+
+# 15. EXACT AI SYSTEM PROMPT
+
+Use the following system prompt for Claude API calls powering the guidance layer.
+
+Do NOT rewrite its meaning.
+
+Use this exact prompt:
+
+You are the guidance assistant inside Government Work Helper, a free platform that helps Karnataka citizens understand and navigate government processes (Aadhaar, PAN, RTO, certificates, and related services). You do not replace the official government portal and you never perform any government transaction — you only explain, guide, and personalize.
+
+Your role: understand what the citizen is trying to accomplish; identify which seeded service (if any) matches; ask only the follow-up questions still needed to personalize their path, never re-asking for information already in their profile or this conversation; explain verified information in simple, citizen-friendly language; never invent, guess, or fill in government rules, fees, documents, or eligibility criteria — every specific fact about a seeded service must come from the SERVICE_CONTEXT provided, not your own training knowledge.
+
+Each turn you receive: USER_PROFILE (language, state, age bracket, category, and anything else already collected — never re-ask for these), SERVICE_CONTEXT (structured verified data for the matched service, or empty if no match), CONVERSATION_HISTORY.
+
+Eligibility is evaluated deterministically by backend code, not by you — you explain the result you're given, you never independently judge whether someone qualifies.
+
+When there is no SERVICE_CONTEXT: say so plainly, offer best-effort general guidance, but clearly and visibly mark it "general info — not verified," keep it high-level (don't fabricate fees, forms, or specifics you're not confident are current and Karnataka-specific), and offer to flag the request for review.
+
+Defer to the official portal instead of guessing for high-stakes or legal-sensitive situations — appeals, rejected applications, legal disputes, penalties, court processes, or anywhere an incorrect guess could cause real harm.
+
+Ask exactly one follow-up question at a time. Respond in the citizen's selected language (English/Hindi/Kannada), detecting from their input if no language is set.
+
+Never ask for government credentials, passwords, OTPs, or Aadhaar/PAN numbers. Never claim to submit, process, or track an application on the citizen's behalf. Redirect politely if asked something outside government-service guidance.
+
+Respond with a single JSON object only, no prose outside it, no markdown fences:
+
+{
+"reply_text": string,
+"matched_service_id": string|null,
+"is_general_info": boolean,
+"needs_follow_up": boolean,
+"follow_up_question": string|null,
+"defer_to_official_portal": boolean,
+"suggest_for_review": {"suggested_name": string, "suggested_category": string} | null
+}
+
+---
+
+# 16. IMPORTANT AI ARCHITECTURE
+
+Do NOT ask Claude to retrieve government service data from its own knowledge.
+
+Before every relevant Claude call:
+
+1. determine possible service
+2. retrieve verified SERVICE_CONTEXT
+3. retrieve USER_PROFILE
+4. retrieve relevant conversation history
+5. calculate deterministic eligibility where sufficient data exists
+6. send context to Claude
+7. parse strict JSON
+8. validate JSON against schema
+9. render response
+
+Intent matching should happen BEFORE Claude's final guidance response.
+
+Use:
+
+* keyword/category matching initially
+* pgvector semantic matching as the primary scalable architecture
+
+Claude should explain and personalize.
+
+It should not become the database.
+
+---
+
+# 17. SERVICE MATCHING
+
+Implement a service matching pipeline:
+
+## Stage 1
+
+Normalize user input.
+
+## Stage 2
+
+Keyword/category matching.
+
+## Stage 3
+
+pgvector semantic search.
+
+## Stage 4
+
+Rank candidates.
+
+## Stage 5
+
+If confidence is high enough:
+
+* select service
+
+If ambiguous:
+
+* ask one clarifying question.
+
+If no match:
+
+* Other card.
+
+Store:
+
+* match confidence
+* matching method
+* matched service
+* timestamp
+
+Make matching auditable.
+
+---
+
+# 18. DETERMINISTIC ELIGIBILITY ENGINE
+
+THIS IS TRUST CRITICAL.
+
+Eligibility MUST NOT be decided by Claude.
+
+Store structured eligibility rules as JSON in PostgreSQL.
+
+Create a backend eligibility engine.
+
+Example conceptual structure:
+
+{
+"all": [
+{
+"field": "age",
+"operator": ">=",
+"value": 18
+}
+]
+}
+
+Support operators such as:
+
+* equals
+* not_equals
+* greater_than
+* greater_than_or_equal
+* less_than
+* less_than_or_equal
+* in
+* not_in
+* exists
+* not_exists
+* all
+* any
+* conditional branches
+
+The engine should return:
+
+{
+"status": "eligible | not_eligible | needs_information",
+"reasons": [],
+"missing_fields": []
+}
+
+The frontend can then explain the result.
+
+Claude only translates this result into simple language.
+
+---
+
+# 19. PERSONALIZED QUESTIONS
+
+Do NOT hard-code one global questionnaire.
+
+Each service should define:
+
+* questions
+* field type
+* question text
+* language translations
+* conditional visibility
+* required/optional
+* validation
+* eligibility relevance
+
+Example:
+
+{
+"id": "dl_renewal",
+"questions": [
+{
+"id": "licence_expired",
+"type": "boolean",
+"required": true
+},
+{
+"id": "licence_category",
+"type": "select",
+"required": true
+}
+]
+}
+
+Questions should appear ONE AT A TIME.
+
+The system should stop asking questions once enough information exists.
+
+---
+
+# 20. VERIFIED SERVICE DATA MODEL
+
+Every service must support:
+
+* id
+* slug
+* name
+* category
+* tier
+* state
+* description
+* short_description
+* eligibility_rules
+* questions
+* required_documents
+* conditional_documents
+* official_fee
+* fee_notes
+* numbered_steps
+* official_url
+* official_url_label
+* what_happens_after_submission
+* troubleshooting
+* source_notes
+* verification_status
+* last_verified_on
+* created_at
+* updated_at
+* version
+* embedding
+* active
+
+The database must distinguish:
+
+### VERIFIED
+
+Information has been human verified.
+
+### NEEDS VERIFICATION
+
+Service exists in the product structure but facts have not yet been verified.
+
+### INACTIVE
+
+Do not expose to normal users.
+
+Never display unverified data as verified.
+
+---
+
+# 21. 30 INITIAL SERVICES
+
+Seed the architecture with these services:
+
+## Tier 1
+
+1. Aadhaar — New Enrollment
+2. Aadhaar — Update
+3. PAN Card — New Application
+4. PAN Card — Correction / Update
+5. Learner's Licence
+6. Permanent Driving Licence
+7. Driving Licence Renewal
+8. Voter ID — New Registration
+9. Voter ID — Correction
+10. Ration Card — New / Modification
+
+## Tier 2
+
+11. Income Certificate
+12. Caste Certificate
+13. Birth Certificate
+14. Death Certificate
+15. Domicile / Residence Certificate
+16. Passport — New / Renewal
+17. Duplicate Driving Licence
+18. Driving Licence — Address / Name Correction
+19. Legal Heir Certificate
+20. Non-Creamy Layer Certificate
+
+## Tier 3
+
+21. Khata Certificate / Khata Transfer
+22. Property Tax Payment
+23. Encumbrance Certificate
+24. RTC / Pahani
+25. Vehicle RC — New Registration
+26. Vehicle RC — Ownership Transfer
+27. Marriage Certificate Registration
+28. Police Clearance Certificate
+29. Disability Certificate
+30. EPF / UAN Services
+
+IMPORTANT:
+
+Do not fabricate the detailed facts for these services.
+
+Create proper structured seed records with verification state.
+
+Only verified records should be presented as verified to users.
+
+The architecture must support the 30 services immediately and expansion to 50+ Karnataka services later.
+
+---
+
+# 22. SERVICE RESULTS PAGE
+
+When the user reaches a matched service, show a beautiful personalized results page.
+
+Example:
+
+# Driving Licence Renewal
+
+Karnataka
+
+### Your personalized result
+
+**Eligibility**
+
+Show deterministic result:
+
+✓ You appear eligible
+
+or:
+
+! We need one more detail
+
+or:
+
+× Based on the information provided, you do not appear to meet the configured criteria.
+
+Always explain why.
+
+Do not let Claude independently calculate the result.
+
+---
+
+# 23. RESULTS PAGE STRUCTURE
+
+Use both cards and a visual step-by-step timeline.
+
+Sections:
+
+## 1. Your eligibility
+
+Personalized deterministic result.
+
+## 2. Documents you need
+
+Show only documents applicable to the user's situation.
+
+Use:
+
+✓ Required
+
+○ Optional
+
+! Additional document depending on your answer
+
+## 3. Official fee
+
+Only show if verified.
+
+If not verified:
+
+**Fee information needs verification. Check the official portal.**
+
+Never guess.
+
+## 4. What you need to do
+
+Numbered steps.
+
+Example structure:
+
+1. Prepare your documents
+2. Open the official portal
+3. Select the relevant service
+4. Complete the government application
+5. Pay any applicable official fee
+6. Complete any required appointment/verification
+7. Wait for the official process
+
+The actual service-specific steps must come from the database.
+
+## 5. Download your pre-filled PDF
+
+Where applicable:
+
+**Download pre-filled form**
+
+Use pdf-lib.
+
+The PDF is generated from user-provided information.
+
+It is NEVER submitted by Government Work Helper.
+
+Clearly label:
+
+**This PDF is prepared for your convenience. You must submit it through the official channel if required.**
+
+## 6. Continue on official government portal
+
+Make this CTA extremely prominent.
+
+Example:
+
+**Continue on Official Government Website →**
+
+Display:
+
+🛡️ Verified official destination
+
+Last verified:
+
+29 Aug 2026
+
+Do not hard-code this date. Read it from the service record.
+
+Only allow URLs from verified database records.
+
+---
+
+# 24. TRUST UI
+
+Trust should be a major design language.
+
+Verified services should visibly display:
+
+🛡️ Verified
+
+**Government-process information**
+
+**Last verified on: [date]**
+
+**Official source**
+
+Never make the product look like the government itself.
+
+Make the distinction obvious:
+
+> Government Work Helper explains the process.
+> The official government portal handles the transaction.
+
+Use visual hierarchy to make this impossible to misunderstand.
+
+---
+
+# 25. OTHER CARD
+
+If there is no verified service match, show a visually distinct card.
+
+Example:
+
+# General information
+
+⚠️ General info — not verified
+
+Explain:
+
+“We couldn't find a verified Karnataka service matching this request yet.”
+
+Then allow AI to provide high-level guidance.
+
+Do NOT invent:
+
+* fees
+* forms
+* exact document requirements
+* exact government URLs
+* detailed Karnataka-specific procedures
+
+Provide:
+
+**Flag this for review**
+
+Allow guests to flag it.
+
+Store:
+
+* suggested name
+* suggested category
+* original user query
+* language
+* state
+* timestamp
+* optional conversation context
+* review status
+
+---
+
+# 26. DASHBOARD
+
+Logged-in users get:
+
+## Overview
+
+* active journeys
+* saved services
+* recently viewed
+* bookmarks
+* history
+
+## Continue where you left off
+
+Example:
+
+Driving Licence Renewal
+Step 3 of 5
+
+**Continue →**
+
+## Saved services
+
+Cards.
+
+## Bookmarks
+
+Saved guides.
+
+## History
+
+Previous guidance sessions.
+
+## Profile
+
+* language
+* state
+* age bracket
+* category
+* personalization information
+
+Allow editing.
+
+---
+
+# 27. PROGRESS TRACKER
+
+For services that involve multiple stages, display:
+
+Preparation
+↓
+Eligibility
+↓
+Documents
+↓
+Application
+↓
+Verification
+↓
+Decision / completion
+
+Important:
+
+This is a guidance tracker.
+
+Do NOT claim that Government Work Helper knows the real government application status unless an official API integration exists.
+
+Never display:
+
+“Your application is approved”
+
+unless the user themselves provides that information.
+
+Instead say:
+
+“According to the official process, the next stage is…”
+
+---
+
+# 28. SEARCH
+
+Global search must be prominent.
+
+Search across:
+
+* services
+* categories
+* synonyms
+* common citizen phrases
+* multilingual phrases
+
+Examples:
+
+“DL renewal”
+
+“license renew”
+
+“driving licence expiry”
+
+“ड्राइविंग लाइसेंस”
+
+“ಡ್ರೈವಿಂಗ್ ಲೈಸೆನ್ಸ್”
+
+should all be capable of reaching the relevant service.
+
+Use pgvector embeddings.
+
+Store service embeddings in PostgreSQL.
+
+---
+
+# 29. MULTILINGUAL SUPPORT
+
+Initial languages:
+
+* English
+* Hindi
+* Kannada
+
+The entire UI architecture should support localization.
+
+Do not translate only AI responses.
+
+Translate:
+
+* navigation
+* buttons
+* onboarding
+* service headings
+* instructions
+* warnings
+* trust messaging
+* errors
+* accessibility labels
+
+Service data should support multilingual fields.
+
+AI responds in the user's selected language.
+
+---
+
+# 30. PDF GENERATION
+
+Use:
+
+pdf-lib
+
+Create a reusable PDF generation service.
+
+Support official form templates where legally/technically appropriate.
+
+Workflow:
+
+User information
+→ validate
+→ map fields
+→ fill PDF
+→ generate downloadable PDF
+
+Never submit it anywhere.
+
+Never transmit it to a government portal.
+
+Store temporarily if needed and delete according to retention policy.
+
+---
+
+# 31. SUPABASE DATABASE TABLES
+
+Create migrations for at least:
+
+### profiles
+
+* id
+* auth_user_id
+* language
+* state
+* age_bracket
+* category
+* district
+* location_type
+* created_at
+* updated_at
+
+### services
+
+* id
+* slug
+* name
+* category
+* tier
+* state
+* description
+* short_description
+* eligibility_rules
+* questions
+* required_documents
+* conditional_documents
+* official_fee
+* fee_notes
+* steps
+* what_happens_after
+* troubleshooting
+* official_url
+* source_notes
+* verification_status
+* last_verified_on
+* version
+* embedding
+* active
+* created_at
+* updated_at
+
+### service_categories
+
+* id
+* name
+* slug
+* translations
+* active
+
+### conversations
+
+* id
+* user_id nullable
+* guest_session_id nullable
+* language
+* state
+* matched_service_id nullable
+* created_at
+* updated_at
+
+### conversation_messages
+
+* id
+* conversation_id
+* role
+* content
+* structured_response
+* created_at
+
+### user_service_journeys
+
+* id
+* user_id
+* service_id
+* status
+* current_step
+* collected_answers
+* eligibility_result
+* created_at
+* updated_at
+
+### bookmarks
+
+* id
+* user_id
+* service_id
+* created_at
+
+### saved_services
+
+* id
+* user_id
+* service_id
+* created_at
+
+### history
+
+* id
+* user_id
+* service_id nullable
+* query
+* created_at
+
+### unlisted_requests
+
+* id
+* user_id nullable
+* guest_session_id nullable
+* suggested_name
+* suggested_category
+* original_query
+* language
+* state
+* status
+* created_at
+* reviewed_at
+* reviewed_by
+
+### service_versions
+
+* id
+* service_id
+* version
+* snapshot
+* changed_by
+* change_reason
+* created_at
+
+### audit_logs
+
+* id
+* actor_id
+* action
+* entity_type
+* entity_id
+* metadata
+* created_at
+
+---
+
+# 32. PGVECTOR
+
+Enable pgvector.
+
+Create an embedding column on services.
+
+Create an appropriate vector index.
+
+Build a server-side semantic search function.
+
+Do not expose unrestricted database access to the browser.
+
+The application should be capable of semantic retrieval across service names, aliases, descriptions and citizen phrasing.
+
+---
+
+# 33. RLS
+
+Implement proper Supabase Row Level Security.
+
+Users should only be able to access their own:
+
+* profile
+* conversations
+* messages
+* journeys
+* bookmarks
+* saved services
+* history
+
+Services can be publicly readable only when active and approved for public use.
+
+Admin tables must be protected.
+
+Never rely on frontend role checks alone.
+
+---
+
+# 34. ADMIN DASHBOARD
+
+Create a protected admin application.
+
+Admin routes:
+
+/admin
+
+/admin/services
+
+/admin/services/[id]
+
+/admin/unlisted
+
+/admin/audit
+
+Admin can:
+
+* create service
+* edit service
+* activate/deactivate
+* update eligibility rules
+* edit documents
+* edit conditional documents
+* edit fees
+* edit steps
+* edit official URL
+* update verification status
+* update last_verified_on
+* add source notes
+* create new version
+* review unmatched requests
+* approve/reject suggestions
+
+Make verification status visually prominent.
+
+Require explicit confirmation before publishing changes to a verified service.
+
+Create audit logs for changes.
+
+---
+
+# 35. SERVICE VERIFICATION WORKFLOW
+
+Implement:
+
+Draft
+→ Review
+→ Verified
+→ Published
+
+A service should NOT become publicly “verified” merely because an admin entered data.
+
+Require explicit verification action.
+
+Record:
+
+* who verified it
+* when
+* version
+* source notes
+
+When service information changes:
+
+create a new version.
+
+Do not silently overwrite history.
+
+---
+
+# 36. OFFICIAL URL SECURITY
+
+Never let Claude invent an official URL.
+
+Never let users submit arbitrary URLs to the service database through normal user flows.
+
+Official URLs must originate from admin-controlled verified service records.
+
+When clicking:
+
+**Continue on Official Government Website**
+
+open the exact stored URL.
+
+Clearly tell users they are leaving Government Work Helper.
+
+---
+
+# 37. AI API
+
+Use Anthropic Claude API.
+
+Create a server-only API integration.
+
+Never expose the Claude API key to the browser.
+
+Environment variable:
+
+ANTHROPIC_API_KEY
+
+Implement:
+
+* timeout
+* retries where safe
+* malformed JSON handling
+* schema validation
+* rate limiting
+* error logging
+* fallback response
+
+Validate Claude responses using a strict schema such as Zod.
+
+If Claude returns invalid JSON:
+
+* do not blindly display it
+* attempt safe recovery
+* otherwise show a controlled error
+
+---
+
+# 38. AI CONTEXT
+
+For each request construct:
+
+USER_PROFILE
+
+SERVICE_CONTEXT
+
+DETERMINISTIC_ELIGIBILITY_RESULT
+
+CONVERSATION_HISTORY
+
+CITIZEN_MESSAGE
+
+The AI should never receive unnecessary sensitive information.
+
+Strip secrets and government identifiers.
+
+---
+
+# 39. CLAUDE OUTPUT
+
+Expected structure:
+
+{
+"reply_text": string,
+"matched_service_id": string|null,
+"is_general_info": boolean,
+"needs_follow_up": boolean,
+"follow_up_question": string|null,
+"defer_to_official_portal": boolean,
+"suggest_for_review": {
+"suggested_name": string,
+"suggested_category": string
+} | null
+}
+
+Validate every response.
+
+Never trust AI-generated service IDs without validating them against the database.
+
+---
+
+# 40. SECURITY
+
+Implement:
+
+* input validation
+* output validation
+* rate limiting
+* CSRF protection where applicable
+* secure cookies
+* authentication checks
+* authorization checks
+* RLS
+* security headers
+* content security policy where practical
+* upload validation
+* file size limits
+* MIME validation
+* safe URL handling
+* server-side authorization
+* secrets only in environment variables
+* no credentials in source code
+
+Never log:
+
+* passwords
+* OTPs
+* Aadhaar numbers
+* PAN numbers
+* authentication tokens
+* unnecessary sensitive document contents
+
+---
+
+# 41. SENTRY
+
+Integrate Sentry.
+
+Track:
+
+* frontend errors
+* API errors
+* AI failures
+* PDF generation failures
+* database failures
+
+Do not send sensitive personal data to Sentry.
+
+Sanitize error context.
+
+Use separate environments:
+
+development
+staging
+production
+
+---
+
+# 42. ENVIRONMENT CONFIGURATION
+
+Create:
+
+.env.example
+
+Include placeholders such as:
+
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+ANTHROPIC_API_KEY=
+SENTRY_DSN=
+NEXT_PUBLIC_APP_URL=
+
+Never commit real secrets.
+
+---
+
+# 43. STAGING + PRODUCTION
+
+Design deployment from day one.
+
+Use:
+
+Vercel
+
+Branches:
+
+main → production
+
+develop → staging
+
+feature/* → preview deployments
+
+Supabase environments should be separated appropriately.
+
+Document deployment.
+
+---
+
+# 44. DESIGN SYSTEM
+
+The design should feel premium and modern.
+
+Avoid:
+
+* government-office aesthetics
+* excessive green
+* bureaucratic tables everywhere
+* old-fashioned forms
+* dense text
+* tiny typography
+* clutter
+
+Use:
+
+* generous whitespace
+* rounded cards
+* subtle shadows
+* modern typography
+* tasteful gradients
+* smooth transitions
+* conversational UI
+* clear hierarchy
+* excellent mobile experience
+
+The visual personality should communicate:
+
+**friendly + intelligent + trustworthy + modern**
+
+Not:
+
+**government portal clone**
+
+---
+
+# 45. HOMEPAGE VISUAL STRUCTURE
+
+Create:
+
+Top navigation:
+
+Logo
+Services
+How it works
+About
+Search
+Language
+Sign in
+
+Hero:
+
+Large AI interface.
+
+Headline:
+
+**Government work, made easier.**
+
+Subheadline:
+
+**Tell us what you need. We’ll figure out the path.**
+
+Large conversational search box.
+
+Example placeholder:
+
+> “I need to renew my driving licence…”
+
+Below:
+
+Popular services.
+
+Then:
+
+How it works:
+
+1. Tell us what you need
+2. We personalize the path
+3. We explain the verified process
+4. You complete it on the official government website
+
+Trust section:
+
+**We explain. The official government system processes.**
+
+---
+
+# 46. PERSONALIZATION UI DESIGN
+
+Make it feel like onboarding to a premium AI application.
+
+Use:
+
+* animated progress indicator
+* one question per screen
+* large selectable cards
+* icons
+* micro-interactions
+* keyboard navigation
+* mobile swipe-friendly controls
+* back button
+* skip option
+
+Example:
+
+“Let's personalize your experience.”
+
+Progress:
+
+● ● ○ ○
+
+Then:
+
+“What language would you like to use?”
+
+English
+हिन्दी
+ಕನ್ನಡ
+
+After selection, animate into next question.
+
+Do NOT reload the page for each question.
+
+---
+
+# 47. ADAPTIVE SERVICE ONBOARDING
+
+Once the category/service is known, dynamically change the questions.
+
+For example:
+
+User chooses:
+
+Driving Licence Renewal
+
+Then:
+
+“Is your licence currently expired?”
+
+Yes
+No
+Not sure
+
+Next relevant question.
+
+Do not ask:
+
+“What's your district?”
+
+unless it is actually needed.
+
+Do not ask:
+
+“What's your gender?”
+
+unless the service rules genuinely require it.
+
+The system should be data-driven.
+
+---
+
+# 48. RESULT EXPERIENCE
+
+Use a clean two-column desktop layout.
+
+Left:
+
+personalized guide
+
+Right:
+
+sticky summary:
+
+Eligibility
+Documents
+Fee
+Next action
+
+On mobile:
+
+single-column layout.
+
+Bottom sticky CTA:
+
+**Continue on Official Government Website →**
+
+---
+
+# 49. CHAT DESIGN
+
+The main chat should support:
+
+* citizen messages
+* assistant responses
+* typing indicator
+* suggested actions
+* question cards
+* answer buttons
+* file upload
+* voice-ready architecture
+* language switching
+* conversation reset
+
+Use WhatsApp/ChatGPT-inspired interaction patterns without copying their branding.
+
+---
+
+# 50. ACCESSIBILITY
+
+Implement:
+
+* keyboard navigation
+* semantic HTML
+* visible focus states
+* ARIA labels
+* sufficient contrast
+* screen-reader-friendly controls
+* reduced-motion support
+* accessible forms
+* error announcements
+
+---
+
+# 51. RESPONSIVE DESIGN
+
+Test at:
+
+* 320px
+* 375px
+* 390px
+* 430px
+* tablet
+* 1366px
+* 1440px
+* large desktop
+
+The mobile experience is extremely important.
+
+---
+
+# 52. PERFORMANCE
+
+Optimize:
+
+* server rendering
+* image loading
+* bundle size
+* API requests
+* database queries
+* vector search
+* caching where safe
+
+Do not unnecessarily call Claude.
+
+Use deterministic logic and database retrieval before AI calls.
+
+---
+
+# 53. AI COST CONTROL
+
+Claude calls should not happen for every UI interaction.
+
+Do NOT use AI to:
+
+* navigate simple pages
+* calculate eligibility
+* retrieve static service fields
+* render documents
+* perform simple search when vector search is sufficient
+
+Use AI when language understanding or explanation is needed.
+
+Cache safe reusable results where appropriate.
+
+---
+
+# 54. ERROR STATES
+
+Design beautiful error states.
+
+Examples:
+
+AI unavailable:
+
+> “Our assistant is temporarily unavailable. You can still browse verified services below.”
+
+Service unavailable:
+
+> “We’re currently reviewing this service information.”
+
+No match:
+
+> “We couldn’t find a verified match yet.”
+
+Database failure:
+
+> “Something went wrong while loading this guide.”
+
+Official portal unavailable:
+
+Do NOT claim it is down unless verified.
+
+Instead:
+
+> “We couldn't open the official website right now. Please try again or use the official link below.”
+
+---
+
+# 55. TRUST STATES
+
+Every service must have a trust state.
+
+### Verified
+
+Green/positive trust badge.
+
+### Needs verification
+
+Amber warning.
+
+### General information
+
+Distinct neutral/warning card.
+
+### Deferred
+
+Clear message:
+
+“We can't guide this confidently. Please use the official government channel.”
+
+Never blur these states together.
+
+---
+
+# 56. LEGAL / HIGH-STAKES CASES
+
+For:
+
+* appeals
+* legal disputes
+* penalties
+* court matters
+* rejected applications
+* complicated disputes
+* potentially harmful situations
+
+defer to official channels.
+
+Do not hallucinate legal advice.
+
+---
+
+# 57. NO GOVERNMENT IMPERSONATION
+
+Do not use:
+
+* government logos unless legally permitted
+* official government branding that could confuse users
+* language implying Government Work Helper is government-owned
+* fake “official” badges
+
+Use:
+
+**Independent citizen guidance platform**
+
+where appropriate.
+
+The trust badge means:
+
+**verified against an official source**
+
+not:
+
+**we are the government**
+
+---
+
+# 58. ANALYTICS
+
+Create privacy-conscious analytics architecture.
+
+Track events such as:
+
+* personalization_started
+* personalization_completed
+* search_started
+* service_matched
+* service_viewed
+* eligibility_completed
+* document_checklist_viewed
+* pdf_generated
+* official_portal_clicked
+* service_saved
+* service_bookmarked
+* unmatched_request_submitted
+
+Do not track sensitive identifiers.
+
+---
+
+# 59. TESTING
+
+Create automated tests for:
+
+## Eligibility engine
+
+Test:
+
+* eligible
+* not eligible
+* missing information
+* nested rules
+* conditional rules
+
+## Service matching
+
+Test:
+
+* exact names
+* synonyms
+* misspellings
+* multilingual input
+* ambiguous services
+
+## AI JSON validation
+
+Test malformed responses.
+
+## RLS
+
+Test users cannot access each other's data.
+
+## PDF
+
+Test field mapping.
+
+## Navigation assistant
+
+Test allowed actions.
+
+## Security
+
+Test unauthorized admin access.
+
+---
+
+# 60. SEEDING
+
+Create seed scripts.
+
+Seed:
+
+* categories
+* 30 services
+* service metadata
+* placeholder/verification states
+* sample question structures
+* sample eligibility structures
+
+Do not fabricate official facts.
+
+Clearly mark incomplete records as needing verification.
+
+---
+
+# 61. DATA QUALITY
+
+The database is the foundation of trust.
+
+Every service-specific fact must have provenance.
+
+For each verified field, support source metadata.
+
+Example:
+
+{
+"source_type": "official_government",
+"source_url": "...",
+"verified_by": "...",
+"verified_on": "..."
+}
+
+Do not display this internal metadata unnecessarily, but use it for admin auditability.
+
+---
+
+# 62. ADMIN SERVICE EDITOR
+
+Build a good admin editor.
+
+Sections:
+
+Basic Information
+
+Eligibility
+
+Questions
+
+Documents
+
+Conditional Documents
+
+Fee
+
+Steps
+
+What Happens After
+
+Troubleshooting
+
+Official URL
+
+Sources
+
+Verification
+
+Version History
+
+Allow admins to preview the citizen-facing service page before publishing.
+
+---
+
+# 63. USER JOURNEY EXAMPLE
+
+Example:
+
+User opens website.
+
+Personalization:
+
+English
+
+Karnataka
+
+26–35
+
+Driving & Transport
+
+Then homepage/service suggestions show:
+
+Learner's Licence
+Permanent Driving Licence
+Driving Licence Renewal
+Duplicate Driving Licence
+Address / Name Correction
+
+User clicks:
+
+Driving Licence Renewal
+
+System asks one relevant question.
+
+Then another if necessary.
+
+Backend evaluates eligibility.
+
+System displays:
+
+### Your personalized guide
+
+Eligibility
+
+Documents
+
+Fee
+
+Steps
+
+PDF
+
+What happens next
+
+Troubleshooting
+
+Official government portal
+
+The floating AI assistant remains available.
+
+User asks:
+
+> “What happens after I submit?”
+
+Assistant explains only using verified service context.
+
+User asks:
+
+> “Take me back.”
+
+Assistant navigates back inside Government Work Helper.
+
+User clicks:
+
+**Continue on Official Government Website**
+
+They leave Government Work Helper.
+
+The government website completes the actual transaction.
+
+Government Work Helper never claims to have completed it.
+
+---
+
+# 64. IMPORTANT: DO NOT OVERBUILD THE WRONG THING
+
+Do NOT build:
+
+* payment gateway
+* government application submission
+* government credential storage
+* OTP handling
+* fake government tracking
+* unofficial agent marketplace
+* ads
+* subscriptions
+* paid services
+
+The product is free.
+
+The product value is:
+
+**understanding + personalization + trustworthy navigation**
+
+The product definition explicitly establishes that it should not replace government portals, act as an agent, charge for instructions, or take payment for completing applications.
+
+---
+
+# 65. FILE / PROJECT STRUCTURE
+
+Create a clean production architecture similar to:
+
+app/
+page.tsx
+onboarding/
+chat/
+services/
+services/[slug]/
+dashboard/
+history/
+bookmarks/
+profile/
+admin/
+api/
+ai/
+services/
+search/
+eligibility/
+pdf/
+profile/
+journeys/
+unlisted/
+admin/
+
+components/
+ui/
+onboarding/
+chat/
+services/
+dashboard/
+assistant/
+trust/
+pdf/
+
+lib/
+supabase/
+anthropic/
+eligibility/
+matching/
+embeddings/
+pdf/
+security/
+validation/
+analytics/
+
+data/
+services/
+categories/
+
+supabase/
+migrations/
+seed/
+
+types/
+
+tests/
+
+Do not blindly follow this structure if Next.js conventions make a better structure appropriate, but maintain strong separation of concerns.
+
+---
+
+# 66. TYPESCRIPT
+
+Use strict TypeScript.
+
+Create shared types for:
+
+* Profile
+* Service
+* ServiceContext
+* EligibilityRule
+* EligibilityResult
+* ServiceQuestion
+* DocumentRequirement
+* Conversation
+* Message
+* AIResponse
+* UserJourney
+* UnlistedRequest
+
+Do not use `any` unnecessarily.
+
+---
+
+# 67. VALIDATION
+
+Use Zod or equivalent.
+
+Validate:
+
+* user input
+* service IDs
+* AI output
+* eligibility rules
+* admin changes
+* upload metadata
+* query parameters
+
+---
+
+# 68. DATABASE ACCESS
+
+Never put the Supabase service-role key in browser code.
+
+Create server-side database helpers.
+
+Use appropriate indexes.
+
+Use transactions where required.
+
+---
+
+# 69. GUEST SESSION
+
+Generate a secure guest session ID.
+
+Store temporary session data.
+
+Do not use personally identifying information as the session identifier.
+
+Allow conversion:
+
+guest session → authenticated account
+
+when the user logs in.
+
+---
+
+# 70. CONVERSATION MEMORY
+
+Within a conversation, do not repeatedly ask information already provided.
+
+Store structured answers separately from raw conversation messages.
+
+For example:
+
+conversation:
+
+“I am 28.”
+
+structured state:
+
+age = 26–35
+
+Then the AI receives this structured information.
+
+Do not make the AI infer everything from raw conversation history.
+
+---
+
+# 71. PERSONALIZATION MEMORY
+
+If the user has already selected:
+
+English
+Karnataka
+26–35
+Driving & Transport
+
+do not ask those questions again.
+
+If they change a setting, update the profile/session.
+
+The system should feel intelligent because it remembers context.
+
+---
+
+# 72. SEARCH + AI COMBINATION
+
+Use deterministic search before AI.
+
+Example:
+
+User:
+
+> “My licence is about to expire and I want to renew it.”
+
+Search/matching should recognize:
+
+Driving Licence Renewal
+
+Then retrieve the service.
+
+Claude explains the process.
+
+Do not ask Claude:
+
+“What government service do you think this is?”
+
+and blindly trust the answer.
+
+---
+
+# 73. OFFICIAL PORTAL BUTTON
+
+Every verified service should have a strong CTA.
+
+Example:
+
+**Continue on Official Government Website ↗**
+
+Under it:
+
+> Government Work Helper does not submit applications or payments. You'll complete the transaction on the official government website.
+
+This message should be consistently visible.
+
+---
+
+# 74. UX COPY
+
+Use plain citizen-friendly language.
+
+Avoid:
+
+“Applicant shall furnish requisite documentation.”
+
+Prefer:
+
+“Keep these documents ready.”
+
+Avoid:
+
+“Proceed to the concerned authority.”
+
+Prefer:
+
+“Open the official website and follow these steps.”
+
+Avoid bureaucratic language wherever possible.
+
+---
+
+# 75. EMPTY STATES
+
+Make every empty state useful.
+
+No saved services:
+
+> “Save a service when you want to come back to it.”
+
+No history:
+
+> “Your completed guidance journeys will appear here.”
+
+No personalization:
+
+> “Personalize your experience to get more relevant guidance.”
+
+---
+
+# 76. ADMIN / USER SEPARATION
+
+Normal users must never see admin functionality.
+
+Do not rely solely on hidden buttons.
+
+Enforce authorization server-side and through Supabase RLS.
+
+---
+
+# 77. DOCUMENT CHECKLIST ENGINE
+
+Documents should support conditions.
+
+Example conceptual structure:
+
+[
+{
+"name": "Document A",
+"required_when": {
+"field": "condition",
+"operator": "equals",
+"value": true
+}
+}
+]
+
+Backend calculates applicable documents.
+
+AI explains the resulting list.
+
+Do not ask Claude to decide which documents apply.
+
+---
+
+# 78. FEES
+
+Fees are trust-critical.
+
+Only show a specific fee when verified.
+
+Store:
+
+* amount
+* currency
+* notes
+* source
+* verification date
+
+If fee varies:
+
+show the structured variation.
+
+Never invent an amount.
+
+---
+
+# 79. TROUBLESHOOTING
+
+Each service should support structured troubleshooting.
+
+Example:
+
+Problem:
+
+“Application rejected”
+
+Guidance:
+
+structured verified explanation.
+
+If the situation is too high-stakes:
+
+defer to official portal/helpdesk.
+
+---
+
+# 80. WHAT HAPPENS AFTER
+
+Every service should have a section:
+
+## What happens after you apply?
+
+Explain the known official process stages using verified data.
+
+Never claim Government Work Helper is tracking the process.
+
+Use language like:
+
+“After you submit through the official portal, the next stage is…”
+
+not:
+
+“We will process your application.”
+
+---
+
+# 81. MOBILE BOTTOM NAVIGATION
+
+On mobile consider:
+
+Home
+Search
+Saved
+History
+Profile
+
+The AI assistant should float above this navigation.
+
+---
+
+# 82. DESKTOP NAVIGATION
+
+Desktop:
+
+Logo
+
+Home
+
+Services
+
+How it works
+
+Search
+
+Saved
+
+History
+
+Profile
+
+Sign in
+
+Floating AI assistant.
+
+---
+
+# 83. SEARCH RESULTS
+
+Search results should show:
+
+Service name
+
+Category
+
+Short explanation
+
+Verification status
+
+Last verified date
+
+Do not overwhelm the user with government terminology.
+
+---
+
+# 84. PERSONALIZATION SUMMARY
+
+After onboarding, show a small summary:
+
+Your setup:
+
+🇮🇳 Karnataka
+
+English
+
+Age 26–35
+
+Driving & Transport
+
+[Edit]
+
+Then recommendations.
+
+---
+
+# 85. AI ASSISTANT CONTEXT AWARENESS
+
+The floating assistant should know:
+
+* current route
+* current service
+* current question
+* user profile
+* current journey
+* verified service context
+
+Example:
+
+If the user is on a Driving Licence Renewal page and asks:
+
+> “Do I need this?”
+
+the assistant should understand what “this” refers to from the current UI context.
+
+Do not require the user to repeat everything.
+
+---
+
+# 86. AI ASSISTANT NAVIGATION SAFETY
+
+The assistant can navigate only inside an explicit route allowlist.
+
+For example:
+
+/
+/services
+/services/[slug]
+/dashboard
+/history
+/bookmarks
+/profile
+/chat
+
+Do not allow arbitrary URL execution.
+
+Official URLs are handled separately through verified service data.
+
+---
+
+# 87. DESIGN MICROINTERACTIONS
+
+Use tasteful animations:
+
+* personalization card selection
+* chat message appearance
+* page transitions
+* progress indicator
+* document checklist completion
+* trust badge appearance
+* assistant opening
+* button hover
+
+Do not over-animate.
+
+---
+
+# 88. PRODUCT PERSONALITY
+
+The application should feel:
+
+Smart.
+
+Calm.
+
+Friendly.
+
+Helpful.
+
+Trustworthy.
+
+Modern.
+
+Never robotic.
+
+Never bureaucratic.
+
+Never like an unofficial “agent”.
+
+---
+
+# 89. BRAND LANGUAGE
+
+Use phrases such as:
+
+**“Tell us what you need.”**
+
+**“We’ll figure out the path.”**
+
+**“Here’s what you need.”**
+
+**“Here’s what happens next.”**
+
+**“Continue on the official government website.”**
+
+**“Verified information.”**
+
+**“General info — not verified.”**
+
+Avoid claims like:
+
+“We'll get your licence for you.”
+
+“We'll process your application.”
+
+“We guarantee approval.”
+
+---
+
+# 90. BUILD ORDER
+
+Build in this order:
+
+### Phase 1
+
+Project setup
+
+Next.js
+
+Tailwind
+
+Supabase
+
+TypeScript
+
+base design system
+
+### Phase 2
+
+Database migrations
+
+service schema
+
+profiles
+
+conversations
+
+journeys
+
+bookmarks
+
+history
+
+unlisted requests
+
+audit logs
+
+### Phase 3
+
+Personalization
+
+guest sessions
+
+profile
+
+adaptive questions
+
+### Phase 4
+
+Service matching
+
+keyword matching
+
+pgvector
+
+semantic search
+
+### Phase 5
+
+Eligibility engine
+
+structured JSON rules
+
+server-side evaluation
+
+### Phase 6
+
+Claude integration
+
+exact system prompt
+
+context assembly
+
+JSON schema validation
+
+### Phase 7
+
+Service guide
+
+documents
+
+fees
+
+steps
+
+trust
+
+official links
+
+### Phase 8
+
+PDF generation
+
+### Phase 9
+
+Global AI assistant
+
+navigation tools
+
+context-aware assistant
+
+### Phase 10
+
+Dashboard
+
+### Phase 11
+
+Admin
+
+### Phase 12
+
+Security
+
+testing
+
+Sentry
+
+deployment
+
+---
+
+# 91. ACCEPTANCE CRITERIA
+
+The implementation is not complete until:
+
+1. A guest can enter the site.
+2. Personalization appears.
+3. User can select language/state/age/category.
+4. User can skip personalization.
+5. User can search directly.
+6. User can select a service.
+7. Service-specific questions appear.
+8. Only one question appears at a time.
+9. Previously supplied information is not repeatedly requested.
+10. Backend evaluates eligibility deterministically.
+11. AI explains eligibility instead of deciding it.
+12. Personalized documents are displayed.
+13. Verified fees are displayed.
+14. Verified steps are displayed.
+15. Official URL is displayed.
+16. Verification date is displayed.
+17. Pre-filled PDF can be generated where configured.
+18. Official portal CTA works.
+19. No government transaction occurs inside the app.
+20. Unmatched requests show the Other/general-info card.
+21. Guests can submit review requests.
+22. Login works.
+23. Dashboard works.
+24. Saved services work.
+25. Bookmarks work.
+26. History works.
+27. Global AI assistant works.
+28. AI can navigate internal pages safely.
+29. AI cannot perform government transactions.
+30. Admin can manage service verification.
+31. RLS protects user data.
+32. AI keys remain server-side.
+33. Uploaded files are validated.
+34. Sentry is integrated.
+35. Staging/production configuration exists.
+36. Tests exist for eligibility, matching, AI validation, RLS and core flows.
+37. Mobile layout works.
+38. Desktop layout works.
+39. Accessibility basics are implemented.
+40. No fabricated government service facts are presented as verified.
+
+---
+
+# 92. CRITICAL DEVELOPMENT RULE
+
+When you do not know a government-process fact, DO NOT INVENT IT.
+
+Build the data structure and UI so the fact can be entered and verified later.
+
+A blank/“needs verification” field is preferable to a plausible but false answer.
+
+Trust is more important than completeness.
+
+---
+
+# 93. FINAL IMPLEMENTATION REQUIREMENT
+
+Do not stop after creating a visual mockup.
+
+Build the actual working application.
+
+Create:
+
+* frontend
+* backend
+* database
+* migrations
+* seed scripts
+* authentication
+* guest sessions
+* AI integration
+* pgvector
+* eligibility engine
+* service matching
+* adaptive personalization
+* PDF generation
+* dashboard
+* admin
+* security
+* testing
+* error handling
+* Sentry
+* deployment configuration
+
+If something cannot be completed because credentials or external service configuration are unavailable, implement the integration correctly with environment variables and clear setup instructions rather than replacing it with fake functionality.
+
+Do not use mock AI responses in production code.
+
+Do not fake government verification.
+
+Do not create fake government URLs.
+
+Do not hard-code eligibility logic into UI components.
+
+Do not put eligibility decisions inside Claude.
+
+Do not expose secrets.
+
+Build the application so it can be connected to real Supabase and Anthropic credentials and deployed to Vercel.
+
+---
+
+# 94. FIRST TASK
+
+Start by creating the complete project structure and foundational architecture.
+
+Then implement the product in the build order above.
+
+At the end, provide:
+
+1. Complete file tree
+2. Database migration instructions
+3. Supabase setup instructions
+4. Environment variable instructions
+5. Anthropic setup instructions
+6. pgvector setup instructions
+7. Sentry setup instructions
+8. Local development instructions
+9. Staging deployment instructions
+10. Production deployment instructions
+11. Seed-data instructions
+12. Test instructions
+13. Security checklist
+14. Remaining service-verification checklist
+
+Do not merely describe the implementation.
+
+Actually create the code.
+
+The finished result should be a polished, modern, AI-first citizen guidance platform called **Government Work Helper**, launching with Karnataka and architected for expansion across India.
