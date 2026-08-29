@@ -6,6 +6,7 @@ import { callClaude } from "@/lib/ai/claude-client";
 import { evaluateEligibility, getApplicableDocuments } from "@/lib/ai/eligibility-engine";
 import { runKeywordPipeline } from "@/lib/ai/matching-pipeline";
 import { buildServiceContext } from "@/lib/ai/system-prompt";
+import { getSeededServices, getSeededServiceBySlug } from "@/lib/services/seed-data";
 import type { Language, Service } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -17,8 +18,15 @@ export async function POST(req: NextRequest) {
     }
     const { message, conversation_id, guest_session_id, service_slug, language } = parsed.data;
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    let user = null;
+    try {
+      const supabase = await createClient();
+      const authRes = await supabase.auth.getUser();
+      user = authRes.data.user;
+    } catch {
+      // Offline/unconfigured
+    }
+
     if (!user && !guest_session_id) {
       return NextResponse.json({ success: false, error: "Auth or guest session required" }, { status: 401 });
     }
@@ -27,45 +35,70 @@ export async function POST(req: NextRequest) {
     let resolvedLanguage: Language = language ?? "en";
 
     if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("language,state,age_bracket,category,district,location_type")
-        .eq("auth_user_id", user.id)
-        .single();
-      if (profile) {
-        userProfile = profile as Record<string, unknown>;
-        resolvedLanguage = (profile.language as Language) ?? resolvedLanguage;
+      try {
+        const supabase = await createClient();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("language,state,age_bracket,category,district,location_type")
+          .eq("auth_user_id", user.id)
+          .single();
+        if (profile) {
+          userProfile = profile as Record<string, unknown>;
+          resolvedLanguage = (profile.language as Language) ?? resolvedLanguage;
+        }
+      } catch {
+        // Fallback
       }
     }
 
     const admin = getAdminClient();
-    let convId = conversation_id;
+    let convId = conversation_id ?? crypto.randomUUID();
 
-    if (!convId) {
-      const { data: conv } = await admin
-        .from("conversations")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert({ user_id: user?.id ?? null, guest_session_id: guest_session_id ?? null, language: resolvedLanguage, state: "karnataka" } as any)
-        .select("id")
-        .single();
-      if (!conv) return NextResponse.json({ success: false, error: "Failed to create conversation" }, { status: 500 });
-      convId = (conv as { id: string }).id;
+    try {
+      if (!conversation_id) {
+        const { data: conv } = await admin
+          .from("conversations")
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert({ user_id: user?.id ?? null, guest_session_id: guest_session_id ?? null, language: resolvedLanguage, state: "karnataka" } as any)
+          .select("id")
+          .single();
+        if (conv) convId = (conv as { id: string }).id;
+      }
+    } catch {
+      // Fallback
     }
 
-    const { data: messages } = await admin
-      .from("conversation_messages")
-      .select("role,content")
-      .eq("conversation_id", convId)
-      .order("created_at", { ascending: false })
-      .limit(10);
+    let conversationHistory: Array<{ role: "user" | "assistant"; content: string }> = [];
+    try {
+      const { data: messages } = await admin
+        .from("conversation_messages")
+        .select("role,content")
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: false })
+        .limit(10);
 
-    const conversationHistory = ((messages ?? []) as Array<{ role: string; content: string }>)
-      .reverse()
-      .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+      if (messages) {
+        conversationHistory = ((messages) as Array<{ role: string; content: string }>)
+          .reverse()
+          .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+      }
+    } catch {
+      // Fallback
+    }
 
-    const { data: allServices } = await admin.from("services").select("id,slug").eq("active", true);
     const slugToId: Record<string, string> = {};
-    ((allServices ?? []) as Array<{ id: string; slug: string }>).forEach((s) => { slugToId[s.slug] = s.id; });
+    try {
+      const { data: allServices } = await admin.from("services").select("id,slug").eq("active", true);
+      if (allServices && allServices.length > 0) {
+        (allServices as Array<{ id: string; slug: string }>).forEach((s) => { slugToId[s.slug] = s.id; });
+      }
+    } catch {
+      // Fallback
+    }
+
+    if (Object.keys(slugToId).length === 0) {
+      getSeededServices().forEach((s) => { slugToId[s.slug] = s.id; });
+    }
 
     let matchedService: Service | null = null;
     let resolvedSlug = service_slug;
@@ -76,16 +109,30 @@ export async function POST(req: NextRequest) {
 
     let serviceCtx = null;
     if (resolvedSlug) {
-      const { data: svc } = await admin.from("services").select("*").eq("slug", resolvedSlug).eq("active", true).single();
-      if (svc) {
-        matchedService = svc as Service;
+      try {
+        const { data: svc } = await admin.from("services").select("*").eq("slug", resolvedSlug).eq("active", true).single();
+        if (svc) matchedService = svc as Service;
+      } catch {
+        // Fallback
+      }
+
+      if (!matchedService) {
+        matchedService = getSeededServiceBySlug(resolvedSlug);
+      }
+
+      if (matchedService) {
         const collectedAnswers = (userProfile.collected_answers as Record<string, unknown>) ?? {};
         const eligResult = evaluateEligibility(matchedService.eligibility_rules, { ...userProfile, ...collectedAnswers });
         const applicableDocs = getApplicableDocuments(matchedService.required_documents, matchedService.conditional_documents, collectedAnswers);
         serviceCtx = buildServiceContext(matchedService, eligResult, resolvedLanguage);
         serviceCtx.applicable_documents = applicableDocs;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await admin.from("conversations").update({ matched_service_id: matchedService.id } as any).eq("id", convId);
+
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await admin.from("conversations").update({ matched_service_id: matchedService.id } as any).eq("id", convId);
+        } catch {
+          // Ignore
+        }
       }
     }
 
@@ -108,34 +155,45 @@ export async function POST(req: NextRequest) {
     const aiResponse = claudeResult.response!;
 
     if (aiResponse.matched_service_id) {
-      const { data: validSvc } = await admin.from("services").select("id").eq("id", aiResponse.matched_service_id).eq("active", true).single();
-      if (!validSvc) aiResponse.matched_service_id = null;
+      const isValid = getSeededServices().some((s) => s.id === aiResponse.matched_service_id);
+      if (!isValid) {
+        try {
+          const { data: validSvc } = await admin.from("services").select("id").eq("id", aiResponse.matched_service_id).eq("active", true).single();
+          if (!validSvc) aiResponse.matched_service_id = null;
+        } catch {
+          aiResponse.matched_service_id = null;
+        }
+      }
     }
 
-    await admin.from("conversation_messages")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .insert([
-        { conversation_id: convId, role: "user", content: message } as any,
-        { conversation_id: convId, role: "assistant", content: aiResponse.reply_text, structured_response: aiResponse } as any,
-      ]);
-
-    if (user) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await admin.from("history").insert({ user_id: user.id, service_id: matchedService?.id ?? null, query: message.slice(0, 500) } as any);
-    }
-
-    if (aiResponse.suggest_for_review) {
-      await admin.from("unlisted_requests")
+    try {
+      await admin.from("conversation_messages")
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert({
-          user_id: user?.id ?? null,
-          guest_session_id: guest_session_id ?? null,
-          suggested_name: aiResponse.suggest_for_review.suggested_name,
-          suggested_category: aiResponse.suggest_for_review.suggested_category,
-          original_query: message,
-          language: resolvedLanguage,
-          state: "karnataka",
-        } as any);
+        .insert([
+          { conversation_id: convId, role: "user", content: message } as any,
+          { conversation_id: convId, role: "assistant", content: aiResponse.reply_text, structured_response: aiResponse } as any,
+        ]);
+
+      if (user) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await admin.from("history").insert({ user_id: user.id, service_id: matchedService?.id ?? null, query: message.slice(0, 500) } as any);
+      }
+
+      if (aiResponse.suggest_for_review) {
+        await admin.from("unlisted_requests")
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert({
+            user_id: user?.id ?? null,
+            guest_session_id: guest_session_id ?? null,
+            suggested_name: aiResponse.suggest_for_review.suggested_name,
+            suggested_category: aiResponse.suggest_for_review.suggested_category,
+            original_query: message,
+            language: resolvedLanguage,
+            state: "karnataka",
+          } as any);
+      }
+    } catch {
+      // Ignore database persistence errors in guest/offline mode
     }
 
     return NextResponse.json({

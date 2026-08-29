@@ -1,10 +1,12 @@
 "use client";
-import { useState, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ArrowRight, SkipForward, Check } from "lucide-react";
+import { ChevronLeft, ArrowRight, SkipForward, Check, Sparkles } from "lucide-react";
 import { useApp } from "@/components/providers";
-import type { AgeGroup, Language } from "@/types";
+import { getSeededServiceBySlug, SEED_SERVICES } from "@/lib/services/seed-data";
+import { t } from "@/lib/utils";
+import type { AgeGroup, Language, ServiceQuestion } from "@/types";
 
 // ─── Data ──────────────────────────────────────────────────────
 
@@ -27,15 +29,13 @@ const CATEGORIES = [
   { value: "identity-documents", label: "Identity & Documents", emoji: "🪪", desc: "Aadhaar, PAN, Passport" },
   { value: "driving-transport", label: "Driving & Transport", emoji: "🚗", desc: "Licence, RC, Vehicle" },
   { value: "certificates", label: "Certificates", emoji: "📋", desc: "Income, Caste, Birth" },
-  { value: "voting", label: "Voting", emoji: "🗳️", desc: "Voter ID, Corrections" },
-  { value: "property-land", label: "Property & Land", emoji: "🏠", desc: "Khata, EC, RTC" },
+  { value: "voting", label: "Voting", emoji: "🗳️", desc: "Voter ID, Registration" },
+  { value: "property-land", label: "Property & Land", emoji: "🏠", desc: "Khata, EC, RTC Pahani" },
   { value: "tax-finance", label: "Tax & Finance", emoji: "🏦", desc: "Property Tax, EPF" },
   { value: "employment-benefits", label: "Employment", emoji: "💼", desc: "EPF, UAN services" },
-  { value: "family-marriage", label: "Family & Marriage", emoji: "❤️", desc: "Marriage, Legal Heir" },
+  { value: "family-marriage", label: "Family & Marriage", emoji: "❤️", desc: "Marriage Certificate" },
   { value: "police-verification", label: "Police & Verification", emoji: "🛡️", desc: "PCC, Clearance" },
-  { value: "health-disability", label: "Health & Disability", emoji: "🏥", desc: "Disability Certificate" },
-  { value: "ration-food", label: "Ration & Food", emoji: "🧺", desc: "Ration Card" },
-  { value: "other", label: "Other", emoji: "⋯", desc: "Something else" },
+  { value: "ration-food", label: "Ration & Food", emoji: "🧺", desc: "Ration Card (Ahara)" },
 ];
 
 // Services per category for adaptive suggestions
@@ -44,35 +44,25 @@ const CATEGORY_SERVICES: Record<string, Array<{ slug: string; label: string; emo
     { slug: "aadhaar-new-enrollment", label: "New Aadhaar", emoji: "🪪" },
     { slug: "aadhaar-update", label: "Aadhaar Update", emoji: "✏️" },
     { slug: "pan-card-new", label: "New PAN Card", emoji: "💳" },
-    { slug: "pan-card-correction", label: "PAN Correction", emoji: "🔧" },
-    { slug: "passport", label: "Passport", emoji: "✈️" },
+    { slug: "passport", label: "Passport (Fresh/Re-issue)", emoji: "✈️" },
   ],
   "driving-transport": [
-    { slug: "learners-licence", label: "Learner's Licence", emoji: "📝" },
+    { slug: "driving-licence-renewal", label: "Driving Licence Renewal", emoji: "🔄" },
+    { slug: "learners-licence", label: "Learner's Licence (LL)", emoji: "📝" },
     { slug: "permanent-driving-licence", label: "Permanent DL", emoji: "🚗" },
-    { slug: "driving-licence-renewal", label: "DL Renewal", emoji: "🔄" },
-    { slug: "duplicate-driving-licence", label: "Duplicate DL", emoji: "📄" },
-    { slug: "dl-correction", label: "DL Correction", emoji: "🔧" },
-    { slug: "vehicle-rc-new", label: "Vehicle RC", emoji: "🚙" },
-    { slug: "vehicle-rc-transfer", label: "RC Transfer", emoji: "🔄" },
   ],
   "certificates": [
     { slug: "income-certificate", label: "Income Certificate", emoji: "💰" },
     { slug: "caste-certificate", label: "Caste Certificate", emoji: "📋" },
     { slug: "birth-certificate", label: "Birth Certificate", emoji: "👶" },
-    { slug: "death-certificate", label: "Death Certificate", emoji: "📄" },
-    { slug: "domicile-certificate", label: "Domicile / Residence", emoji: "🏠" },
-    { slug: "legal-heir-certificate", label: "Legal Heir", emoji: "⚖️" },
-    { slug: "non-creamy-layer-certificate", label: "Non-Creamy Layer", emoji: "📋" },
   ],
   "voting": [
-    { slug: "voter-id-new", label: "New Voter ID", emoji: "🗳️" },
-    { slug: "voter-id-correction", label: "Voter ID Correction", emoji: "✏️" },
+    { slug: "voter-id-new", label: "New Voter ID Card", emoji: "🗳️" },
   ],
   "property-land": [
-    { slug: "khata-certificate-transfer", label: "Khata Certificate", emoji: "🏠" },
-    { slug: "encumbrance-certificate", label: "Encumbrance Certificate", emoji: "📑" },
-    { slug: "rtc-pahani", label: "RTC / Pahani", emoji: "🌾" },
+    { slug: "khata-certificate-transfer", label: "BBMP Khata Transfer", emoji: "🏠" },
+    { slug: "encumbrance-certificate", label: "Encumbrance Certificate (EC)", emoji: "📑" },
+    { slug: "rtc-pahani", label: "RTC / Pahani (Bhoomi)", emoji: "🌾" },
   ],
   "tax-finance": [
     { slug: "property-tax-bbmp", label: "Property Tax (BBMP)", emoji: "🏦" },
@@ -82,71 +72,131 @@ const CATEGORY_SERVICES: Record<string, Array<{ slug: string; label: string; emo
     { slug: "epf-uan-services", label: "EPF / UAN Services", emoji: "💼" },
   ],
   "family-marriage": [
-    { slug: "marriage-certificate", label: "Marriage Certificate", emoji: "❤️" },
-    { slug: "legal-heir-certificate", label: "Legal Heir Certificate", emoji: "⚖️" },
+    { slug: "marriage-certificate", label: "Marriage Registration", emoji: "❤️" },
   ],
   "police-verification": [
-    { slug: "police-clearance-certificate", label: "Police Clearance", emoji: "🛡️" },
-  ],
-  "health-disability": [
-    { slug: "disability-certificate", label: "Disability Certificate", emoji: "♿" },
+    { slug: "police-clearance-certificate", label: "Police Clearance (PCC)", emoji: "🛡️" },
   ],
   "ration-food": [
-    { slug: "ration-card", label: "Ration Card", emoji: "🧺" },
+    { slug: "ration-card", label: "Ration Card (Ahara)", emoji: "🧺" },
   ],
-  "other": [],
 };
 
-// ─── Step types ────────────────────────────────────────────────
-type StepId = "language" | "state" | "age" | "category" | "service";
-
-interface Selections {
-  language: Language;
-  age_bracket: AgeGroup | null;
-  category: string | null;
-  service_slug: string | null;
-}
-
-// ─── Labels ────────────────────────────────────────────────────
 function useLabels(lang: Language) {
   const L = {
-    en: { back: "Back", skip: "Skip", done: "Get started", q_lang: "Which language feels most comfortable?", q_state: "Where are you getting this done?", q_age: "What age group are you in?", q_cat: "What are you here to get done?", q_service: "Which service do you need?" },
-    hi: { back: "वापस", skip: "छोड़ें", done: "शुरू करें", q_lang: "आप किस भाषा में सहज हैं?", q_state: "आप कहाँ से काम करवाना चाहते हैं?", q_age: "आपकी आयु वर्ग क्या है?", q_cat: "आप क्या काम करवाना चाहते हैं?", q_service: "आपको कौन सी सेवा चाहिए?" },
-    kn: { back: "ಹಿಂದೆ", skip: "ಬಿಡಿ", done: "ಪ್ರಾರಂಭಿಸಿ", q_lang: "ನಿಮಗೆ ಯಾವ ಭಾಷೆ ಅನುಕೂಲ?", q_state: "ನೀವು ಎಲ್ಲಿ ಕೆಲಸ ಮಾಡಿಸಿಕೊಳ್ಳಬೇಕು?", q_age: "ನಿಮ್ಮ ವಯಸ್ಸಿನ ಗುಂಪು?", q_cat: "ನೀವು ಯಾವ ಕೆಲಸ ಮಾಡಿಸಿಕೊಳ್ಳಬೇಕು?", q_service: "ನಿಮಗೆ ಯಾವ ಸೇವೆ ಬೇಕು?" },
+    en: {
+      back: "Back",
+      skip: "Skip",
+      continue: "Continue",
+      done: "View My Personalized Guide →",
+      finish: "Finish Setup",
+      q_lang: "Which language feels most comfortable?",
+      q_state: "Where are you getting this done?",
+      q_age: "What age group are you in?",
+      q_cat: "What are you here to get done?",
+      q_service: "Which specific service do you need?",
+      q_dynamic: "A quick question to customize your steps",
+    },
+    hi: {
+      back: "वापस",
+      skip: "छोड़ें",
+      continue: "आगे बढ़ें",
+      done: "मेरी व्यक्तिगत मार्गदर्शिका देखें →",
+      finish: "समाप्त करें",
+      q_lang: "आप किस भाषा में सहज हैं?",
+      q_state: "आप कहाँ से काम करवाना चाहते हैं?",
+      q_age: "आपकी आयु वर्ग क्या है?",
+      q_cat: "आप क्या काम करवाना चाहते हैं?",
+      q_service: "आपको कौन सी सेवा चाहिए?",
+      q_dynamic: "आपकी प्रक्रिया को अनुकूलित करने के लिए प्रश्न",
+    },
+    kn: {
+      back: "ಹಿಂದೆ",
+      skip: "ಬಿಡಿ",
+      continue: "ಮುಂದುವರಿಯಿರಿ",
+      done: "ನನ್ನ ವೈಯಕ್ತಿಕ ಮಾರ್ಗದರ್ಶಿ ನೋಡಿ →",
+      finish: "ಪೂರ್ಣಗೊಳಿಸಿ",
+      q_lang: "ನಿಮಗೆ ಯಾವ ಭಾಷೆ ಹೆಚ್ಚು ಅನುಕೂಲ?",
+      q_state: "ನೀವು ಎಲ್ಲಿ ಕೆಲಸ ಮಾಡಿಸಿಕೊಳ್ಳಬೇಕು?",
+      q_age: "ನಿಮ್ಮ ವಯಸ್ಸಿನ ಗುಂಪು ಯಾವುದು?",
+      q_cat: "ನೀವು ಯಾವ ಕೆಲಸ ಮಾಡಿಸಿಕೊಳ್ಳಬೇಕು?",
+      q_service: "ನಿಮಗೆ ಯಾವ ನಿರ್ದಿಷ್ಟ ಸೇವೆ ಬೇಕು?",
+      q_dynamic: "ನಿಮ್ಮ ಹಂತಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಲು ಪ್ರಶ್ನೆ",
+    },
   };
   return L[lang] ?? L.en;
 }
 
-// ─── Main component ────────────────────────────────────────────
-function OnboardingFlowInner() {
+interface OnboardingFlowProps {
+  onComplete?: () => void;
+  isModal?: boolean;
+}
+
+function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") ?? "/";
+  const redirectTo = searchParams?.get("redirectTo") ?? "/";
   const { updateGuestProfile, setLanguage, markOnboarded, language: currentLang, guestProfile } = useApp();
 
-  const STEPS: StepId[] = ["language", "state", "age", "category", "service"];
-
+  const [mounted, setMounted] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
-  const [direction, setDirection] = useState(1); // 1=forward, -1=back
-  const [selections, setSelections] = useState<Selections>({
-    language: currentLang,
-    age_bracket: guestProfile.age_bracket,
-    category: guestProfile.category,
-    service_slug: null,
-  });
+  const [direction, setDirection] = useState(1);
+  const [selectedLang, setSelectedLang] = useState<Language>(currentLang ?? "en");
+  const [selectedAge, setSelectedAge] = useState<AgeGroup | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedServiceSlug, setSelectedServiceSlug] = useState<string | null>(null);
+  const [serviceAnswers, setServiceAnswers] = useState<Record<string, unknown>>({});
 
-  const currentStep = STEPS[stepIdx];
-  const L = useLabels(selections.language);
-  const categoryServices = selections.category ? (CATEGORY_SERVICES[selections.category] ?? []) : [];
+  useEffect(() => {
+    setMounted(true);
+    if (guestProfile) {
+      if (guestProfile.language) setSelectedLang(guestProfile.language);
+      if (guestProfile.age_bracket) setSelectedAge(guestProfile.age_bracket);
+      if (guestProfile.category) setSelectedCategory(guestProfile.category);
+      if (guestProfile.collected_answers) setServiceAnswers(guestProfile.collected_answers);
+    }
+  }, [guestProfile]);
+
+  const L = useLabels(selectedLang);
+
+  // Dynamic service questions
+  const selectedService = useMemo(() => {
+    if (!selectedServiceSlug) return null;
+    return getSeededServiceBySlug(selectedServiceSlug);
+  }, [selectedServiceSlug]);
+
+  const serviceQuestions: ServiceQuestion[] = useMemo(() => {
+    if (!selectedService || !selectedService.questions) return [];
+    return selectedService.questions;
+  }, [selectedService]);
+
+  // Steps definition
+  // 0: language, 1: state, 2: age, 3: category, 4: service (optional), 5..N: service questions (optional)
+  const categoryServices = selectedCategory ? (CATEGORY_SERVICES[selectedCategory] ?? []) : [];
+
+  const totalSteps = useMemo(() => {
+    let count = 4; // lang, state, age, category
+    if (categoryServices.length > 0) {
+      count += 1; // service selection step
+      if (selectedServiceSlug && serviceQuestions.length > 0) {
+        count += Math.min(serviceQuestions.length, 2); // max 2 dynamic questions in onboarding
+      }
+    }
+    return count;
+  }, [categoryServices.length, selectedServiceSlug, serviceQuestions.length]);
 
   const goNext = () => {
     setDirection(1);
-    // Skip service step if category has no services or is "other"
-    if (STEPS[stepIdx + 1] === "service" && categoryServices.length === 0) {
+    // If at category step and no services, finish
+    if (stepIdx === 3 && categoryServices.length === 0) {
       finish();
       return;
     }
-    setStepIdx((i) => Math.min(i + 1, STEPS.length - 1));
+    if (stepIdx >= totalSteps - 1) {
+      finish();
+      return;
+    }
+    setStepIdx((i) => i + 1);
   };
 
   const goBack = () => {
@@ -155,92 +205,148 @@ function OnboardingFlowInner() {
   };
 
   const skip = () => {
-    // Save whatever we have so far
-    updateGuestProfile({ language: selections.language, age_bracket: selections.age_bracket, category: selections.category });
-    setLanguage(selections.language);
+    updateGuestProfile({
+      language: selectedLang,
+      age_bracket: selectedAge,
+      category: selectedCategory,
+      collected_answers: serviceAnswers,
+    });
+    setLanguage(selectedLang);
     markOnboarded();
-    router.push(redirectTo);
+    if (onComplete) onComplete();
+    else router.push(redirectTo);
   };
 
   const finish = () => {
-    updateGuestProfile({ language: selections.language, age_bracket: selections.age_bracket, category: selections.category });
-    setLanguage(selections.language);
+    updateGuestProfile({
+      language: selectedLang,
+      age_bracket: selectedAge,
+      category: selectedCategory,
+      collected_answers: serviceAnswers,
+    });
+    setLanguage(selectedLang);
     markOnboarded();
-    if (selections.service_slug) {
-      router.push(`/services/${selections.service_slug}`);
+    if (onComplete) {
+      onComplete();
+      if (selectedServiceSlug) router.push(`/services/${selectedServiceSlug}`);
+    } else if (selectedServiceSlug) {
+      router.push(`/services/${selectedServiceSlug}`);
     } else {
       router.push(redirectTo);
     }
   };
 
-  const pick = <K extends keyof Selections>(key: K, value: Selections[K], autoAdvance = true) => {
-    setSelections((p) => ({ ...p, [key]: value }));
-    if (autoAdvance) setTimeout(goNext, 280);
+  const pickLang = (lang: Language) => {
+    setSelectedLang(lang);
+    setLanguage(lang);
+    setTimeout(goNext, 250);
   };
 
-  // Progress — exclude "service" step from count if category has no services
-  const visibleSteps = categoryServices.length > 0 ? STEPS.length : STEPS.length - 1;
-  const progress = Math.min(stepIdx / (visibleSteps - 1), 1);
+  const pickAge = (age: AgeGroup) => {
+    setSelectedAge(age);
+    setTimeout(goNext, 250);
+  };
+
+  const pickCategory = (cat: string) => {
+    setSelectedCategory(cat);
+    setSelectedServiceSlug(null);
+    setTimeout(goNext, 250);
+  };
+
+  const pickService = (slug: string) => {
+    setSelectedServiceSlug(slug);
+    const svc = getSeededServiceBySlug(slug);
+    if (svc && svc.questions && svc.questions.length > 0) {
+      setTimeout(goNext, 250);
+    } else {
+      setTimeout(finish, 250);
+    }
+  };
+
+  const answerQuestion = (qId: string, value: unknown) => {
+    setServiceAnswers((prev) => ({ ...prev, [qId]: value }));
+    setTimeout(goNext, 250);
+  };
+
+  // Determine current step view
+  let currentStepView: "language" | "state" | "age" | "category" | "service" | "dynamic_question" = "language";
+  let activeQuestion: ServiceQuestion | null = null;
+
+  if (stepIdx === 0) currentStepView = "language";
+  else if (stepIdx === 1) currentStepView = "state";
+  else if (stepIdx === 2) currentStepView = "age";
+  else if (stepIdx === 3) currentStepView = "category";
+  else if (stepIdx === 4 && categoryServices.length > 0) currentStepView = "service";
+  else if (stepIdx >= 5 && serviceQuestions.length > 0) {
+    currentStepView = "dynamic_question";
+    activeQuestion = serviceQuestions[stepIdx - 5] ?? null;
+  }
+
+  const progress = Math.min((stepIdx + 1) / Math.max(totalSteps, 1), 1);
 
   const variants = {
-    enter: (d: number) => ({ opacity: 0, x: d * 32 }),
+    enter: (d: number) => ({ opacity: 0, x: d * 28 }),
     center: { opacity: 1, x: 0 },
-    exit: (d: number) => ({ opacity: 0, x: -d * 32 }),
+    exit: (d: number) => ({ opacity: 0, x: -d * 28 }),
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0f1e] via-[#0d1326] to-[#0a0f1e] flex flex-col items-center justify-center px-4 py-8">
-      {/* Background glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-brand-600/10 rounded-full blur-[100px]" />
-      </div>
+    <div className={`w-full max-w-lg mx-auto ${isModal ? "p-4 sm:p-6" : "min-h-screen bg-gradient-to-br from-[#0a0f1e] via-[#0d1326] to-[#0a0f1e] flex flex-col items-center justify-center px-4 py-8"}`}>
+      {/* Glow */}
+      {!isModal && (
+        <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-brand-600/15 rounded-full blur-[100px]" />
+        </div>
+      )}
 
-      <div className="relative z-10 w-full max-w-md">
-        {/* Progress bar */}
-        <div className="mb-8">
+      <div className={`relative z-10 w-full ${isModal ? "" : "bg-white/5 border border-white/10 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl"}`}>
+        {/* Progress Header */}
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-gray-500">
-              Step {stepIdx + 1} of {visibleSteps}
+            <span className="text-xs font-semibold tracking-wider text-brand-400 uppercase">
+              Step {stepIdx + 1} of {totalSteps}
             </span>
-            <button onClick={skip} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1 transition-colors">
-              <SkipForward className="w-3 h-3" /> {L.skip}
+            <button
+              onClick={skip}
+              className="text-xs text-gray-400 hover:text-white flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
+            >
+              <SkipForward className="w-3.5 h-3.5" /> {L.skip}
             </button>
           </div>
-          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full"
+              className="h-full bg-gradient-to-r from-brand-500 via-purple-400 to-brand-400 rounded-full"
               animate={{ width: `${progress * 100}%` }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
             />
           </div>
         </div>
 
-        {/* Step content */}
-        <div className="relative overflow-hidden" style={{ minHeight: 380 }}>
+        {/* Step Card Contents */}
+        <div className="relative overflow-hidden" style={{ minHeight: 340 }}>
           <AnimatePresence custom={direction} mode="wait">
             <motion.div
-              key={currentStep}
+              key={stepIdx}
               custom={direction}
               variants={variants}
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.28, ease: "easeInOut" }}
-              className="absolute inset-0"
+              transition={{ duration: 0.25, ease: "easeInOut" }}
             >
-              {/* Language */}
-              {currentStep === "language" && (
+              {/* 1. Language */}
+              {currentStepView === "language" && (
                 <StepShell title={L.q_lang}>
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     {LANGUAGES.map((lang) => (
                       <OptionCard
                         key={lang.value}
-                        selected={selections.language === lang.value}
-                        onClick={() => pick("language", lang.value)}
+                        selected={selectedLang === lang.value}
+                        onClick={() => pickLang(lang.value)}
                       >
                         <span className="text-2xl">{lang.flag}</span>
                         <div className="flex-1">
-                          <p className="font-semibold text-white">{lang.native}</p>
+                          <p className="font-semibold text-white text-base">{lang.native}</p>
                           <p className="text-xs text-gray-400">{lang.label}</p>
                         </div>
                       </OptionCard>
@@ -249,54 +355,36 @@ function OnboardingFlowInner() {
                 </StepShell>
               )}
 
-              {/* State */}
-              {currentStep === "state" && (
+              {/* 2. State */}
+              {currentStepView === "state" && (
                 <StepShell title={L.q_state}>
                   <OptionCard selected onClick={goNext}>
                     <span className="text-3xl">🇮🇳</span>
                     <div className="flex-1">
-                      <p className="font-semibold text-white">Karnataka</p>
-                      <p className="text-xs text-gray-400">Pilot state · More coming soon</p>
+                      <p className="font-bold text-white text-base">Karnataka</p>
+                      <p className="text-xs text-gray-400">Launch State · All 31 Districts Supported</p>
                     </div>
-                    <span className="text-xs bg-brand-500/20 text-brand-300 border border-brand-500/30 px-2 py-0.5 rounded-full">Pre-selected</span>
+                    <span className="text-xs font-semibold bg-brand-500/20 text-brand-300 border border-brand-500/30 px-2.5 py-1 rounded-full">
+                      Selected
+                    </span>
                   </OptionCard>
                 </StepShell>
               )}
 
-              {/* Age */}
-              {currentStep === "age" && (
+              {/* 3. Age Group */}
+              {currentStepView === "age" && (
                 <StepShell title={L.q_age}>
                   <div className="grid grid-cols-2 gap-2.5">
                     {AGE_GROUPS.map((ag) => (
                       <OptionCard
                         key={ag.value}
-                        selected={selections.age_bracket === ag.value}
-                        onClick={() => pick("age_bracket", ag.value)}
+                        selected={selectedAge === ag.value}
+                        onClick={() => pickAge(ag.value)}
                         compact
                       >
-                        <p className="font-bold text-white text-sm">{ag.label}</p>
-                        <p className="text-xs text-gray-500">{ag.sub}</p>
-                      </OptionCard>
-                    ))}
-                  </div>
-                </StepShell>
-              )}
-
-              {/* Category */}
-              {currentStep === "category" && (
-                <StepShell title={L.q_cat}>
-                  <div className="grid grid-cols-2 gap-2">
-                    {CATEGORIES.map((cat) => (
-                      <OptionCard
-                        key={cat.value}
-                        selected={selections.category === cat.value}
-                        onClick={() => pick("category", cat.value)}
-                        compact
-                      >
-                        <span className="text-xl">{cat.emoji}</span>
                         <div>
-                          <p className="font-semibold text-white text-xs leading-tight">{cat.label}</p>
-                          <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{cat.desc}</p>
+                          <p className="font-bold text-white text-sm">{ag.label}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{ag.sub}</p>
                         </div>
                       </OptionCard>
                     ))}
@@ -304,26 +392,85 @@ function OnboardingFlowInner() {
                 </StepShell>
               )}
 
-              {/* Service (adaptive — only shown if category has services) */}
-              {currentStep === "service" && categoryServices.length > 0 && (
+              {/* 4. Category */}
+              {currentStepView === "category" && (
+                <StepShell title={L.q_cat}>
+                  <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1">
+                    {CATEGORIES.map((cat) => (
+                      <OptionCard
+                        key={cat.value}
+                        selected={selectedCategory === cat.value}
+                        onClick={() => pickCategory(cat.value)}
+                        compact
+                      >
+                        <span className="text-xl shrink-0">{cat.emoji}</span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-white text-xs leading-tight truncate">{cat.label}</p>
+                          <p className="text-[10px] text-gray-400 leading-tight mt-0.5 truncate">{cat.desc}</p>
+                        </div>
+                      </OptionCard>
+                    ))}
+                  </div>
+                </StepShell>
+              )}
+
+              {/* 5. Service Suggestions */}
+              {currentStepView === "service" && (
                 <StepShell title={L.q_service}>
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                     {categoryServices.map((svc) => (
                       <OptionCard
                         key={svc.slug}
-                        selected={selections.service_slug === svc.slug}
-                        onClick={() => { setSelections((p) => ({ ...p, service_slug: svc.slug })); setTimeout(finish, 280); }}
+                        selected={selectedServiceSlug === svc.slug}
+                        onClick={() => pickService(svc.slug)}
                       >
                         <span className="text-xl">{svc.emoji}</span>
-                        <p className="font-medium text-white text-sm flex-1">{svc.label}</p>
+                        <p className="font-semibold text-white text-sm flex-1">{svc.label}</p>
                       </OptionCard>
                     ))}
                     <button
                       onClick={finish}
-                      className="w-full text-sm text-gray-500 hover:text-gray-300 text-center py-2 transition-colors"
+                      className="w-full text-xs text-gray-400 hover:text-brand-300 text-center py-2 transition-colors mt-2"
                     >
-                      Not sure / see all services →
+                      Not listed / explore all services →
                     </button>
+                  </div>
+                </StepShell>
+              )}
+
+              {/* 6. Dynamic Service-Specific Question */}
+              {currentStepView === "dynamic_question" && activeQuestion && (
+                <StepShell title={t(activeQuestion.label, selectedLang)}>
+                  <div className="space-y-3">
+                    {activeQuestion.type === "boolean" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <OptionCard
+                          selected={serviceAnswers[activeQuestion.id] === true}
+                          onClick={() => answerQuestion(activeQuestion!.id, true)}
+                        >
+                          <p className="font-bold text-white text-center w-full">Yes</p>
+                        </OptionCard>
+                        <OptionCard
+                          selected={serviceAnswers[activeQuestion.id] === false}
+                          onClick={() => answerQuestion(activeQuestion!.id, false)}
+                        >
+                          <p className="font-bold text-white text-center w-full">No</p>
+                        </OptionCard>
+                      </div>
+                    )}
+                    {activeQuestion.type === "select" && activeQuestion.options && (
+                      <div className="space-y-2">
+                        {activeQuestion.options.map((opt) => (
+                          <OptionCard
+                            key={opt.value}
+                            selected={serviceAnswers[activeQuestion!.id] === opt.value}
+                            onClick={() => answerQuestion(activeQuestion!.id, opt.value)}
+                          >
+                            <p className="font-medium text-white text-sm">{t(opt.label, selectedLang)}</p>
+                          </OptionCard>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </StepShell>
               )}
@@ -331,51 +478,34 @@ function OnboardingFlowInner() {
           </AnimatePresence>
         </div>
 
-        {/* Bottom nav */}
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
+        {/* Navigation Footer */}
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
           <button
             onClick={goBack}
             disabled={stepIdx === 0}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 disabled:opacity-0 disabled:pointer-events-none transition-colors"
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white disabled:opacity-0 disabled:pointer-events-none transition-colors"
           >
             <ChevronLeft className="w-4 h-4" /> {L.back}
           </button>
 
-          {currentStep !== "service" && (
-            <button
-              onClick={goNext}
-              className="flex items-center gap-1.5 text-sm font-medium text-brand-400 hover:text-brand-300 transition-colors"
-            >
-              {stepIdx === visibleSteps - 1 ? L.done : "Continue"} <ArrowRight className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            onClick={goNext}
+            className="flex items-center gap-2 text-xs font-semibold bg-brand-500 hover:bg-brand-400 active:scale-95 text-white px-4 py-2 rounded-xl transition-all shadow-md shadow-brand-500/20"
+          >
+            {stepIdx >= totalSteps - 1 ? L.done : L.continue}
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
-
-        {/* Context summary — show already collected info */}
-        {(selections.language !== "en" || selections.age_bracket || selections.category) && (
-          <div className="mt-5 flex flex-wrap gap-1.5 justify-center">
-            {selections.language !== "en" && (
-              <Pill>{LANGUAGES.find(l => l.value === selections.language)?.native}</Pill>
-            )}
-            {selections.age_bracket && (
-              <Pill>{AGE_GROUPS.find(a => a.value === selections.age_bracket)?.label}</Pill>
-            )}
-            {selections.category && (
-              <Pill>{CATEGORIES.find(c => c.value === selections.category)?.label}</Pill>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────
 function StepShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h1 className="text-xl sm:text-2xl font-bold text-white mb-6 leading-snug">{title}</h1>
-      <div className="max-h-[340px] overflow-y-auto pr-1 scrollbar-thin">{children}</div>
+      <h2 className="text-lg sm:text-xl font-bold text-white mb-5 leading-snug">{title}</h2>
+      <div>{children}</div>
     </div>
   );
 }
@@ -389,16 +519,16 @@ function OptionCard({
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.97 }}
-      className={`w-full flex items-center gap-3 rounded-xl border-2 text-left transition-all duration-200
+      className={`w-full flex items-center gap-3 rounded-2xl border text-left transition-all duration-200
         ${compact ? "p-3" : "px-4 py-3.5"}
         ${selected
-          ? "border-brand-500 bg-brand-500/10 shadow-[0_0_0_4px_rgba(79,110,247,0.1)]"
-          : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"
+          ? "border-brand-500 bg-brand-500/20 shadow-[0_0_0_3px_rgba(79,110,247,0.2)]"
+          : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
         }`}
     >
       {children}
       {selected && (
-        <span className="ml-auto shrink-0 w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center">
+        <span className="ml-auto shrink-0 w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center shadow-sm">
           <Check className="w-3 h-3 text-white" strokeWidth={3} />
         </span>
       )}
@@ -406,18 +536,10 @@ function OptionCard({
   );
 }
 
-function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-xs text-gray-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
-      {children}
-    </span>
-  );
-}
-
-export function OnboardingFlow() {
+export function OnboardingFlow(props: OnboardingFlowProps) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#0a0f1e]" />}>
-      <OnboardingFlowInner />
+      <OnboardingFlowInner {...props} />
     </Suspense>
   );
 }

@@ -7,6 +7,15 @@ import type { GuestProfile, Language } from "@/types";
 
 const ONBOARDING_KEY = "gwh_onboarding_done";
 
+const DEFAULT_GUEST_PROFILE: GuestProfile = {
+  guest_session_id: "default-session",
+  language: "en",
+  state: "karnataka",
+  age_bracket: null,
+  category: null,
+  collected_answers: {},
+};
+
 interface AppContextValue {
   user: User | null;
   guestProfile: GuestProfile;
@@ -23,13 +32,15 @@ const AppContext = createContext<AppContextValue | null>(null);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [guestProfile, setGuestProfile] = useState<GuestProfile>(() => getOrCreateGuestSession());
+  const [guestProfile, setGuestProfile] = useState<GuestProfile>(DEFAULT_GUEST_PROFILE);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasOnboarded, setHasOnboarded] = useState(true); // default true, set false after mount check
+  const [hasOnboarded, setHasOnboarded] = useState(true); // default true for SSR, checked on client mount
 
-  // Check onboarding status on mount
+  // Sync localStorage & auth on mount
   useEffect(() => {
     try {
+      const session = getOrCreateGuestSession();
+      setGuestProfile(session);
       const done = localStorage.getItem(ONBOARDING_KEY);
       setHasOnboarded(done === "true");
     } catch {
@@ -38,15 +49,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
+    try {
+      const supabase = createClient();
+      supabase.auth.getUser().then(({ data }) => {
+        setUser(data.user);
+        setIsLoading(false);
+      }).catch(() => {
+        setIsLoading(false);
+      });
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+      });
+      return () => subscription.unsubscribe();
+    } catch {
       setIsLoading(false);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
   const updateGuestProfile = useCallback((updates: Partial<GuestProfile>) => {
@@ -64,7 +82,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ language: lang }),
-      }).catch(console.warn);
+      }).catch(() => {});
     }
   }, [updateGuestProfile, user]);
 

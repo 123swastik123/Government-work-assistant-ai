@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageCircle, X, Send, RotateCcw,
-  Minimize2, Sparkles, AlertTriangle, ArrowUpRight
+  Minimize2, Sparkles, ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "@/components/providers";
@@ -14,18 +14,18 @@ import { cn } from "@/lib/utils";
 import type { AIResponse } from "@/types";
 
 const ALLOWED_NAV: Record<string, string> = {
-  "home":         "/",
-  "services":     "/services",
-  "chat":         "/chat",
-  "dashboard":    "/dashboard",
-  "history":      "/history",
-  "bookmarks":    "/bookmarks",
-  "profile":      "/profile",
-  "search":       "/search",
-  "personalize":  "/onboarding",
-  "onboarding":   "/onboarding",
+  "home": "/",
+  "services": "/services",
+  "chat": "/chat",
+  "dashboard": "/dashboard",
+  "history": "/history",
+  "bookmarks": "/bookmarks",
+  "profile": "/profile",
+  "search": "/search",
+  "personalize": "/onboarding",
+  "onboarding": "/onboarding",
   "how it works": "/how-it-works",
-  "about":        "/about",
+  "about": "/about",
 };
 
 interface ChatMsg {
@@ -38,19 +38,24 @@ interface ChatMsg {
 
 export function FloatingAssistant() {
   // ── ALL hooks first — no early return before this block ──────
-  const [open, setOpen]           = useState(false);
+  const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
-  const [messages, setMessages]   = useState<ChatMsg[]>([]);
-  const [input, setInput]         = useState("");
-  const [loading, setLoading]     = useState(false);
-  const [convId, setConvId]       = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [convId, setConvId] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef  = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const { guestProfile, user, language } = useApp();
+  const { guestProfile, user, language, setLanguage } = useApp();
   const pathname = usePathname();
-  const router   = useRouter();
+  const router = useRouter();
+
+  // Extract service_slug if on /services/[slug]
+  const currentServiceSlug = pathname?.startsWith("/services/")
+    ? pathname.replace("/services/", "").split("/")[0]
+    : null;
 
   // Track open event
   useEffect(() => {
@@ -90,18 +95,80 @@ export function FloatingAssistant() {
 
       const lower = text.toLowerCase().trim();
 
-      // Pattern-based navigation — no API call needed
-      if (lower === "go back" || lower.startsWith("take me back")) {
+      // Client navigation action: Go back
+      if (lower === "go back" || lower.startsWith("take me back") || lower === "back") {
         router.back();
         setMessages((p) => [...p, { id: crypto.randomUUID(), role: "assistant", content: "Going back.", isNav: true }]);
         setLoading(false);
         return;
       }
-      if (lower === "start over" || lower === "reset" || lower === "clear") {
-        setMessages([]); setConvId(null); setLoading(false);
+
+      // Client navigation action: Go forward
+      if (lower === "go forward" || lower === "forward") {
+        if (typeof window !== "undefined") window.history.forward();
+        setMessages((p) => [...p, { id: crypto.randomUUID(), role: "assistant", content: "Going forward.", isNav: true }]);
+        setLoading(false);
         return;
       }
 
+      // Language change actions
+      if (lower === "change to kannada" || lower === "switch to kannada" || lower === "kannada") {
+        setLanguage("kn");
+        setMessages((p) => [...p, { id: crypto.randomUUID(), role: "assistant", content: "ಭಾಷೆಯನ್ನು ಕನ್ನಡಕ್ಕೆ ಬದಲಾಯಿಸಲಾಗಿದೆ.", isNav: true }]);
+        setLoading(false);
+        return;
+      }
+      if (lower === "change to hindi" || lower === "switch to hindi" || lower === "hindi") {
+        setLanguage("hi");
+        setMessages((p) => [...p, { id: crypto.randomUUID(), role: "assistant", content: "भाषा को हिन्दी में बदल दिया गया है।", isNav: true }]);
+        setLoading(false);
+        return;
+      }
+      if (lower === "change to english" || lower === "switch to english" || lower === "english") {
+        setLanguage("en");
+        setMessages((p) => [...p, { id: crypto.randomUUID(), role: "assistant", content: "Language switched to English.", isNav: true }]);
+        setLoading(false);
+        return;
+      }
+
+      // Section scroll actions on service page
+      if (lower.includes("document") || lower.includes("docs")) {
+        const el = typeof document !== "undefined" ? document.getElementById("documents") : null;
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+          setMessages((p) => [...p, { id: crypto.randomUUID(), role: "assistant", content: "Scrolling to required documents.", isNav: true }]);
+          setLoading(false);
+          return;
+        }
+      }
+      if (lower.includes("eligib")) {
+        const el = typeof document !== "undefined" ? document.getElementById("eligibility") : null;
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+          setMessages((p) => [...p, { id: crypto.randomUUID(), role: "assistant", content: "Scrolling to eligibility criteria.", isNav: true }]);
+          setLoading(false);
+          return;
+        }
+      }
+      if (lower.includes("step") || lower.includes("process")) {
+        const el = typeof document !== "undefined" ? document.getElementById("steps") : null;
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+          setMessages((p) => [...p, { id: crypto.randomUUID(), role: "assistant", content: "Scrolling to application steps.", isNav: true }]);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Reset / clear
+      if (lower === "start over" || lower === "reset" || lower === "clear") {
+        setMessages([]);
+        setConvId(null);
+        setLoading(false);
+        return;
+      }
+
+      // Named route navigation
       for (const [keyword, path] of Object.entries(ALLOWED_NAV)) {
         if (
           lower === keyword ||
@@ -116,18 +183,22 @@ export function FloatingAssistant() {
         }
       }
 
-      // AI call
+      // AI backend call
       try {
-        const body: Record<string, unknown> = { message: text.trim(), language };
+        const body: Record<string, unknown> = {
+          message: text.trim(),
+          language,
+        };
+        if (currentServiceSlug) body.service_slug = currentServiceSlug;
         if (convId) body.conversation_id = convId;
-        if (!user)  body.guest_session_id = guestProfile.guest_session_id;
+        if (!user) body.guest_session_id = guestProfile.guest_session_id;
 
-        const res  = await fetch("/api/ai/chat", {
+        const res = await fetch("/api/ai/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        const data = await res.json() as {
+        const data = (await res.json()) as {
           success: boolean;
           data?: { response: AIResponse; conversation_id: string };
         };
@@ -137,24 +208,32 @@ export function FloatingAssistant() {
         const { response, conversation_id } = data.data!;
         if (conversation_id && !convId) setConvId(conversation_id);
 
-        setMessages((p) => [...p, {
-          id: crypto.randomUUID(), role: "assistant",
-          content: response.reply_text, response,
-        }]);
+        setMessages((p) => [
+          ...p,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: response.reply_text,
+            response,
+          },
+        ]);
       } catch {
-        setMessages((p) => [...p, {
-          id: crypto.randomUUID(), role: "assistant",
-          content: "I couldn't process that right now. Please try again.",
-        }]);
+        setMessages((p) => [
+          ...p,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "I couldn't process that right now. Please try asking again.",
+          },
+        ]);
       } finally {
         setLoading(false);
       }
     },
-    [loading, convId, guestProfile.guest_session_id, user, language, navigate, router]
+    [loading, convId, guestProfile.guest_session_id, user, language, setLanguage, currentServiceSlug, navigate, router]
   );
 
-  // ── Now safe to conditionally render ──────────────────────────
-  // Hide on onboarding page (but hooks are already called above)
+  // ── Safe conditional rendering ──
   const hidden = pathname === "/onboarding";
 
   return (
@@ -173,7 +252,7 @@ export function FloatingAssistant() {
             aria-label="Open Government Work Helper assistant"
           >
             <MessageCircle className="w-5 h-5" />
-            <span className="text-sm font-semibold">Ask me anything</span>
+            <span className="text-sm font-semibold">Ask Assistant</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -189,19 +268,21 @@ export function FloatingAssistant() {
             transition={{ type: "spring", damping: 22, stiffness: 300 }}
             className="fixed bottom-5 right-5 z-50 flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200"
             style={{
-              width:     "min(360px, calc(100vw - 2rem))",
-              maxHeight: "min(530px, calc(100vh - 6rem))",
+              width: "min(380px, calc(100vw - 2rem))",
+              maxHeight: "min(560px, calc(100vh - 6rem))",
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0 bg-gray-50/70 rounded-t-2xl">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg flex items-center justify-center shadow-sm">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900">GWH Assistant</p>
-                  <p className="text-[10px] text-gray-400 truncate max-w-[140px]">{pathname}</p>
+                  <p className="text-sm font-bold text-gray-900 leading-tight">GWH AI Assistant</p>
+                  <p className="text-[10px] text-gray-500 truncate max-w-[170px]">
+                    {currentServiceSlug ? `Guiding: ${currentServiceSlug}` : pathname}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-0.5">
@@ -209,7 +290,7 @@ export function FloatingAssistant() {
                   <button
                     onClick={() => { setMessages([]); setConvId(null); }}
                     aria-label="Clear chat"
-                    className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200/50 rounded-lg transition-colors"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
@@ -217,14 +298,14 @@ export function FloatingAssistant() {
                 <button
                   onClick={() => setMinimized(true)}
                   aria-label="Minimize"
-                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200/50 rounded-lg transition-colors"
                 >
                   <Minimize2 className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setOpen(false)}
                   aria-label="Close"
-                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200/50 rounded-lg transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -232,103 +313,110 @@ export function FloatingAssistant() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
-              {messages.length === 0 && <WelcomeMsg onSuggestion={sendMessage} />}
-              {messages.map((msg) => (
-                <div key={msg.id} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
-                  {msg.role === "user" ? (
-                    <div className="bg-brand-500 text-white text-sm rounded-2xl rounded-tr-sm px-3 py-2 max-w-[80%] leading-relaxed break-words">
-                      {msg.content}
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5 max-w-[88%]">
-                      {msg.response?.is_general_info && (
-                        <div className="text-[10px] text-orange-600 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3 shrink-0" /> General info — not verified
-                        </div>
-                      )}
-                      <div className={cn(
-                        "text-sm rounded-2xl rounded-tl-sm px-3 py-2 leading-relaxed break-words",
-                        msg.isNav
-                          ? "bg-brand-50 border border-brand-200 text-brand-800"
-                          : "bg-gray-50 border border-gray-200 text-gray-800"
-                      )}>
-                        {msg.content}
-                      </div>
-                      {msg.response?.matched_service_id && (
-                        <Link
-                          href={`/services/${msg.response.matched_service_id}`}
-                          className="flex items-center gap-1.5 text-xs text-brand-600 bg-brand-50 border border-brand-200 rounded-lg px-2.5 py-1.5 hover:bg-brand-100 transition-colors w-fit"
-                        >
-                          View guide <ArrowUpRight className="w-3 h-3" />
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[220px]">
+              {messages.length === 0 ? (
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Sparkles className="w-6 h-6 text-brand-500" />
+                  </div>
+                  <p className="text-xs font-semibold text-gray-800">
+                    How can I help you today?
+                  </p>
+                  <p className="text-[11px] text-gray-500 mt-1 max-w-[240px] mx-auto leading-relaxed">
+                    Ask about eligibility, documents, or say &ldquo;go to documents&rdquo; / &ldquo;change to kannada&rdquo;.
+                  </p>
 
-              {loading && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-50 border border-gray-200 rounded-2xl rounded-tl-sm px-3 py-2.5 flex items-center gap-1.5">
-                    {[0, 0.15, 0.3].map((d, i) => (
-                      <motion.div key={i} className="w-1.5 h-1.5 bg-gray-400 rounded-full"
-                        animate={{ y: [0, -4, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: d }} />
+                  <div className="flex flex-wrap justify-center gap-1.5 mt-4">
+                    {[
+                      "What documents do I need?",
+                      "How do I renew my DL?",
+                      "Check my eligibility",
+                    ].map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => sendMessage(q)}
+                        className="text-[11px] bg-gray-100 hover:bg-brand-50 hover:text-brand-700 text-gray-600 px-2.5 py-1.5 rounded-lg text-left transition-colors"
+                      >
+                        {q}
+                      </button>
                     ))}
                   </div>
+                </div>
+              ) : (
+                messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={cn(
+                      "flex flex-col text-xs leading-relaxed max-w-[85%]",
+                      m.role === "user" ? "ml-auto items-end" : "mr-auto items-start"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "px-3.5 py-2.5 rounded-2xl",
+                        m.role === "user"
+                          ? "bg-brand-500 text-white rounded-br-sm shadow-sm"
+                          : m.isNav
+                          ? "bg-purple-50 text-purple-900 border border-purple-200 rounded-bl-sm font-medium"
+                          : "bg-gray-100 text-gray-800 rounded-bl-sm"
+                      )}
+                    >
+                      {m.content}
+                    </div>
+
+                    {/* Follow up question badge */}
+                    {m.response?.needs_follow_up && m.response.follow_up_question && (
+                      <button
+                        onClick={() => sendMessage(m.response!.follow_up_question!)}
+                        className="mt-2 text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold px-2.5 py-1.5 rounded-lg border border-amber-200 text-left transition-colors"
+                      >
+                        👉 {m.response.follow_up_question}
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+
+              {loading && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-400 py-1">
+                  <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                 </div>
               )}
               <div ref={bottomRef} />
             </div>
 
-            {/* Input */}
-            <div className="p-3 border-t border-gray-100 shrink-0">
-              <div className="flex gap-2">
+            {/* Input Footer */}
+            <div className="p-3 border-t border-gray-100 bg-white rounded-b-2xl">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendMessage(input);
+                }}
+                className="flex items-center gap-2"
+              >
                 <input
                   ref={inputRef}
+                  type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") sendMessage(input); }}
-                  placeholder="Ask anything…"
-                  disabled={loading}
-                  aria-label="Ask the assistant"
-                  className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                  placeholder="Ask a question or type an action..."
+                  className="flex-1 text-xs bg-gray-100 border-none rounded-xl px-3.5 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
                 <button
-                  onClick={() => sendMessage(input)}
+                  type="submit"
                   disabled={!input.trim() || loading}
-                  aria-label="Send"
-                  className="shrink-0 w-9 h-9 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white rounded-xl flex items-center justify-center transition-colors"
+                  className="p-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white rounded-xl transition-all active:scale-95 shadow-sm"
+                  aria-label="Send message"
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>
-              </div>
-              <p className="text-[10px] text-gray-400 text-center mt-1.5">
-                No Aadhaar · No PAN · No passwords
-              </p>
+              </form>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </>
-  );
-}
-
-function WelcomeMsg({ onSuggestion }: { onSuggestion: (s: string) => void }) {
-  const SUGGESTIONS = ["Renew driving licence", "Income certificate", "Go to dashboard", "Start over"];
-  return (
-    <div className="space-y-2.5">
-      <div className="bg-brand-50 border border-brand-200 rounded-2xl rounded-tl-sm p-3 text-sm text-brand-900 leading-relaxed">
-        Hi! I can help you navigate Karnataka government services, answer questions, or take you anywhere in the app.
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {SUGGESTIONS.map((s) => (
-          <button key={s} onClick={() => onSuggestion(s)}
-            className="text-xs text-gray-600 bg-gray-100 hover:bg-brand-50 hover:text-brand-600 border border-gray-200 hover:border-brand-300 rounded-full px-2.5 py-1 transition-colors">
-            {s}
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }
