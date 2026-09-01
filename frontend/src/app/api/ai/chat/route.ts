@@ -32,6 +32,22 @@ function buildVerifiedGuideResponse(service: Service, eligibility: EligibilityRe
   };
 }
 
+function buildCategoryGuideResponse(category: string, language: Language): AIResponse {
+  const services = getSeededServices().filter((service) => service.category === category).slice(0, 5);
+  const serviceList = services.map((service) => `• ${t(service.name, language)}`).join("\n");
+  return {
+    reply_text: services.length
+      ? `I used your personalization to find these verified Karnataka services for you:\n\n${serviceList}\n\nChoose the specific service you need, and I will show its documents, eligibility context, clear steps, and the official portal.`
+      : "Your preferences are saved. We do not yet have a verified service guide in that category. Please browse the verified service directory or choose another category.",
+    matched_service_id: null,
+    is_general_info: false,
+    needs_follow_up: services.length > 0,
+    follow_up_question: services.length > 0 ? "Which of these services would you like guidance for?" : null,
+    defer_to_official_portal: false,
+    suggest_for_review: null,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({})) as Record<string, unknown>;
@@ -174,6 +190,20 @@ export async function POST(req: NextRequest) {
           response: buildVerifiedGuideResponse(matchedService, serviceCtx.eligibility_result, serviceCtx.applicable_documents, resolvedLanguage),
           conversation_id: convId,
           service: { id: matchedService.id, slug: matchedService.slug, name: matchedService.name, verification_status: matchedService.verification_status, last_verified_on: matchedService.last_verified_on, official_url: matchedService.official_url },
+        },
+      });
+    }
+
+    // A broad onboarding category should still result in useful, verified
+    // guidance even if no external model is available. The next user choice
+    // can then resolve to a specific service and its official process.
+    if (!conversation_id && !service_slug && typeof userProfile.category === "string") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          response: buildCategoryGuideResponse(userProfile.category, resolvedLanguage),
+          conversation_id: convId,
+          service: null,
         },
       });
     }
