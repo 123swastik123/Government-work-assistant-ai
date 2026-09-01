@@ -40,12 +40,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   // Sync localStorage & auth on mount
   useEffect(() => {
-    // Keep guest mode fast and reliable when a local developer has not yet
-    // configured Supabase; never issue requests to placeholder domains.
-    if (!isSupabaseConfigured()) {
-      setIsLoading(false);
-      return;
-    }
     try {
       const session = getOrCreateGuestSession();
       setGuestProfile(session);
@@ -54,6 +48,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     } catch {
       setHasOnboarded(false);
     }
+    // Guest personalization must work even if Supabase is not configured.
+    // Only the optional account lookup is skipped in that situation.
+    if (!isSupabaseConfigured()) setIsLoading(false);
   }, []);
 
   useEffect(() => {

@@ -252,11 +252,18 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     });
     setLanguage(selectedLang);
     markOnboarded();
+    const categoryLabel = CATEGORIES.find((category) => category.value === selectedCategory)?.label ?? "Karnataka citizen services";
+    const personalizedQuery = selectedServiceSlug
+      ? `Guide me on ${selectedService?.name.en ?? "this service"}`
+      : `Show me verified Karnataka guidance for ${categoryLabel}${selectedLocation ? ` for a ${selectedLocation} resident` : ""}${selectedAge ? ` in the ${selectedAge.replace("_", "–")} age group` : ""}.`;
+    const destination = selectedServiceSlug
+      ? `/chat?q=${encodeURIComponent(personalizedQuery)}&service_slug=${selectedServiceSlug}`
+      : `/chat?q=${encodeURIComponent(personalizedQuery)}`;
     if (onComplete) {
       onComplete();
-      if (selectedServiceSlug) router.push(`/chat?q=${encodeURIComponent(`Guide me on ${selectedService?.name.en ?? "this service"}`)}&service_slug=${selectedServiceSlug}`);
-    } else if (selectedServiceSlug) {
-      router.push(`/chat?q=${encodeURIComponent(`Guide me on ${selectedService?.name.en ?? "this service"}`)}&service_slug=${selectedServiceSlug}`);
+      router.push(destination);
+    } else if (selectedCategory) {
+      router.push(destination);
     } else {
       router.push(redirectTo);
     }

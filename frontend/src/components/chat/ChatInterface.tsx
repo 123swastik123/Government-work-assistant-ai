@@ -28,7 +28,7 @@ function ChatInterfaceInner() {
   const searchParams = useSearchParams();
   const initialQ = searchParams.get("q") ?? "";
   const requestedService = searchParams.get("service_slug") ?? undefined;
-  const { guestProfile, user, language } = useApp();
+  const { guestProfile, user, language, isLoading: isAppLoading } = useApp();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -103,12 +103,11 @@ function ChatInterfaceInner() {
   }, [loading, conversationId, guestProfile, user, language, requestedService]);
 
   useEffect(() => {
-    if (initialQ && !sentInitial.current) {
+    if (initialQ && !sentInitial.current && !isAppLoading) {
       sentInitial.current = true;
       sendMessage(initialQ);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialQ, isAppLoading, sendMessage]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
