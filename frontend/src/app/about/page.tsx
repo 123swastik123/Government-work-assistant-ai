@@ -3,9 +3,9 @@ export const metadata: Metadata = { title: "About — Government Work Helper" };
 export default function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-4">About Government Work Helper</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-4">About NammaPath</h1>
       <div className="prose-gwh space-y-4 text-gray-600">
-        <p>Government Work Helper is a free, independent citizen guidance platform for India, starting with Karnataka.</p>
+        <p>NammaPath is a free, independent citizen guidance platform for India, starting with Karnataka.</p>
         <p>Our mission is simple: help every citizen understand and navigate government processes — regardless of their education, language, or familiarity with government systems.</p>
         <h2 className="text-xl font-semibold text-gray-900 mt-6">What we do</h2>
         <p>We explain. We guide. We personalize. We send you to the official government portal to complete the actual transaction.</p>

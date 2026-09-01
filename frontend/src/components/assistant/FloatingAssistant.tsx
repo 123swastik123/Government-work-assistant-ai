@@ -75,7 +75,7 @@ export function FloatingAssistant() {
     (path: string, label: string): string => {
       const allowed = Object.values(ALLOWED_NAV);
       if (!allowed.includes(path) && !allowed.some((r) => path.startsWith(r + "/"))) {
-        return "I can only navigate within CivicPath Karnataka.";
+        return "I can only navigate within NammaPath Karnataka.";
       }
       router.push(path);
       trackEvent("assistant_navigated", { action: path });
@@ -256,7 +256,7 @@ export function FloatingAssistant() {
             transition={{ type: "spring", damping: 16, stiffness: 260 }}
             onClick={() => { setOpen(true); setMinimized(false); }}
             className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-50 flex items-center gap-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-full pl-4 pr-5 py-3 shadow-xl shadow-brand-500/30 transition-colors md:bottom-5 md:right-5"
-            aria-label="Open CivicPath assistant"
+            aria-label="Open NammaPath assistant"
           >
             <MessageCircle className="w-5 h-5" />
             <span className="text-sm font-semibold">Ask Assistant</span>
@@ -286,7 +286,7 @@ export function FloatingAssistant() {
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 leading-tight">CivicPath Guide</p>
+                  <p className="text-sm font-bold text-gray-900 leading-tight">NammaPath Guide</p>
                   <p className="text-[10px] text-gray-500 truncate max-w-[170px]">
                     {currentServiceSlug ? `Guiding: ${currentServiceSlug}` : pathname}
                   </p>

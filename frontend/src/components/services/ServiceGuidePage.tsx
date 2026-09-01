@@ -336,7 +336,7 @@ export function ServiceGuidePage({ service }: Props) {
                 {t(service.official_url_label, language) || "Open official website"}<ExternalLink className="w-4 h-4 shrink-0" />
               </a>
               <p className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-brand-800"><Link2 className="w-3.5 h-3.5" /> Official portal: {officialDomain}</p>
-              <p className="text-xs text-gray-500 mt-3 text-center leading-relaxed">CivicPath explains the verified path. The official government system completes the transaction.</p>
+              <p className="text-xs text-gray-500 mt-3 text-center leading-relaxed">NammaPath explains the verified path. The official government system completes the transaction.</p>
               {service.last_verified_on && (
                 <p className="text-[11px] text-gray-400 text-center mt-2 border-t border-brand-200/50 pt-2">
                   Portal URL verified: {formatDate(service.last_verified_on)}

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, ShieldCheck, LockKeyhole, Zap, BadgeCheck, Car, FileText, Vote, CreditCard, Baby, Plane, Wheat, Landmark, type LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { NammaMark } from "@/components/brand/NammaMark";
 
 const CHIPS: Array<{ label: string; icon: LucideIcon }> = [
   { label: "Driving Licence Renewal", icon: Car }, { label: "Aadhaar Update", icon: FileText },
@@ -60,7 +61,7 @@ export function HeroSection() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-[#bff5ef] text-xs font-semibold px-4 py-1.5 rounded-full mb-8 uppercase tracking-widest">
           <Sparkles className="w-3 h-3" />
-          Karnataka Pilot · Free for citizens
+          <NammaMark className="h-4 w-4" /> NammaPath Karnataka · Free for citizens
         </motion.div>
 
         {/* Headline */}

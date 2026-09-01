@@ -20,7 +20,7 @@ export function TrustSection() {
             <span className="text-brand-500">The government system processes.</span>
           </h2>
           <p className="text-gray-500 mt-3 max-w-xl mx-auto text-sm">
-            Government Work Helper is an independent citizen guidance platform.
+            NammaPath is an independent citizen guidance platform.
             Not affiliated with any government department.
           </p>
         </div>
@@ -42,7 +42,7 @@ export function TrustSection() {
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-5">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-sm text-amber-800 leading-relaxed">
-            <strong>Important:</strong> Government Work Helper does not submit applications, make payments, or act as a government agent.
+            <strong>Important:</strong> NammaPath does not submit applications, make payments, or act as a government agent.
             You complete the actual transaction on the official government portal.
             This platform is free and always will be.
           </p>

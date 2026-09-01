@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield } from "lucide-react";
+import { NammaMark } from "@/components/brand/NammaMark";
 
 export function Footer() {
   const pathname = usePathname();
@@ -13,10 +13,8 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-                <Shield className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-gray-900">CivicPath Karnataka</span>
+              <NammaMark className="w-9 h-9" />
+              <span className="font-bold text-gray-900">Namma<span className="text-brand-600">Path</span></span>
             </div>
             <p className="text-sm text-gray-500 max-w-sm leading-relaxed">
               An independent citizen guidance platform. We explain government processes. 
@@ -60,7 +58,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-400">
-            © {new Date().getFullYear()} CivicPath Karnataka. Free for citizens.
+            © {new Date().getFullYear()} NammaPath Karnataka. Free for citizens.
           </p>
           <p className="text-xs text-gray-400">
             Karnataka pilot · More states coming soon

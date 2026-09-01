@@ -129,7 +129,7 @@ function ChatInterfaceInner() {
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h1 className="font-semibold text-gray-900 text-sm sm:text-base">CivicPath Guide</h1>
+            <h1 className="font-semibold text-gray-900 text-sm sm:text-base">NammaPath Guide</h1>
             <p className="text-xs text-gray-400 hidden sm:block">Karnataka government services · Ask anything</p>
           </div>
         </div>

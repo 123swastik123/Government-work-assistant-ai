@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, Search, LogIn, LayoutDashboard, Shield, Sparkles } from "lucide-react";
+import { Menu, X, Search, LogIn, LayoutDashboard, Sparkles } from "lucide-react";
 import { useApp } from "@/components/providers";
+import { NammaMark } from "@/components/brand/NammaMark";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -27,16 +28,14 @@ export function Navbar() {
   if (pathname === "/onboarding") return null;
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <header className="sticky top-0 z-40 w-full bg-white/85 backdrop-blur-xl border-b border-brand-100/80 shadow-[0_8px_30px_rgba(7,62,69,0.06)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 font-bold text-gray-900 text-lg hover:text-brand-600 transition-colors">
-            <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-700 rounded-lg flex items-center justify-center shadow-sm">
-              <Shield className="w-4 h-4 text-white" />
-            </div>
-            <span className="hidden sm:inline">CivicPath Karnataka</span>
-            <span className="sm:hidden font-extrabold text-brand-600">CivicPath</span>
+          <Link href="/" className="flex items-center gap-2.5 font-bold text-[#073E45] text-lg hover:text-brand-600 transition-colors">
+            <NammaMark className="h-9 w-9 drop-shadow-sm" />
+            <span className="hidden sm:inline tracking-tight">Namma<span className="text-brand-600">Path</span></span>
+            <span className="sm:hidden font-extrabold text-brand-600">NammaPath</span>
           </Link>
 
           {/* Desktop nav */}

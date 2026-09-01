@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ArrowRight, Check, Building2, MapPin, ShieldCheck, Languages, FileText, Car, Vote, House, Landmark, BriefcaseBusiness, HeartHandshake, Scale, GraduationCap, HandHeart, Wheat, type LucideIcon } from "lucide-react";
 import { useApp } from "@/components/providers";
+import { NammaMark } from "@/components/brand/NammaMark";
 import { getSeededServiceBySlug } from "@/lib/services/seed-data";
 import { t } from "@/lib/utils";
 import type { AgeGroup, Language, ServiceQuestion } from "@/types";
@@ -321,20 +322,29 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   };
 
   return (
-    <div className={`w-full max-w-xl mx-auto ${isModal ? "p-4 sm:p-6" : "min-h-screen bg-[radial-gradient(ellipse_at_top,_#0B8C92_0%,_#073E45_45%,_#022b32_100%)] flex flex-col items-center justify-center px-4 py-8"}`}>
+    <div className={`w-full ${isModal ? "max-w-xl mx-auto p-4 sm:p-6" : "min-h-screen bg-[#061f2b] flex flex-col items-center justify-center px-4 py-8"}`}>
       {/* Glow */}
       {!isModal && (
         <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
           <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#8ef3eb]/15 rounded-full blur-[100px]" />
           <div className="absolute bottom-0 -left-20 w-80 h-80 bg-[#087477]/45 rounded-full blur-[100px]" />
+          <div className="absolute top-[15%] -right-16 h-72 w-72 rounded-full border border-[#8ef3eb]/20 bg-[#7C5CFF]/15 blur-[1px] animate-[spin_18s_linear_infinite]" />
+          <div className="absolute inset-0 opacity-[0.09] [background-image:linear-gradient(rgba(142,243,235,.65)_1px,transparent_1px),linear-gradient(90deg,rgba(142,243,235,.65)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_74%)]" />
         </div>
       )}
 
-      <div className={`relative z-10 w-full ${isModal ? "" : "bg-[#073E45]/80 border border-white/20 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-[#022b32]/50"}`}>
+      <div className={`relative z-10 w-full ${isModal ? "" : "max-w-5xl mx-auto bg-[#073E45]/80 border border-white/20 backdrop-blur-xl rounded-[2rem] p-5 sm:p-8 shadow-2xl shadow-[#022b32]/50"}`}>
+        <div className={!isModal ? "lg:grid lg:grid-cols-[0.78fr_1.22fr] lg:gap-10 lg:items-center" : ""}>
+        {!isModal && <aside className="relative hidden min-h-[560px] overflow-hidden rounded-[1.5rem] border border-white/15 bg-[linear-gradient(145deg,rgba(124,92,255,.26),rgba(35,212,193,.13)_55%,rgba(7,62,69,.25))] lg:flex lg:flex-col lg:justify-between p-7">
+          <div className="relative z-10"><div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold tracking-[.16em] text-[#d9fffa] uppercase"><span className="h-1.5 w-1.5 rounded-full bg-[#8ef3eb] shadow-[0_0_12px_#8ef3eb]" />Personalized route</div><h1 className="mt-5 text-3xl font-black leading-tight tracking-tight text-white">Your next government task, <span className="text-[#8ef3eb]">made clearer.</span></h1><p className="mt-3 text-sm leading-relaxed text-[#c6e0e1]">A few safe choices let NammaPath organise the right official guidance for you.</p></div>
+          <OnboardingOrb />
+          <div className="relative z-10 flex items-center gap-2 text-xs text-[#d9fffa]"><NammaMark className="h-7 w-7" /><span><strong>NammaPath</strong><br />Karnataka citizen guidance</span></div>
+        </aside>}
+        <div className="min-w-0">
         {!isModal && (
           <div className="flex items-center gap-3 mb-7">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#39bdb6] to-[#087477] text-white flex items-center justify-center shadow-lg shadow-[#022b32]/40"><ShieldCheck className="w-6 h-6" /></div>
-            <div><p className="font-bold text-white tracking-tight">CivicPath Karnataka</p><p className="text-xs text-[#bff5ef]/80">A clearer path to public services</p></div>
+            <div><p className="font-bold text-white tracking-tight">Namma<span className="text-[#8ef3eb]">Path</span> Karnataka</p><p className="text-xs text-[#bff5ef]/80">A clearer path to public services</p></div>
           </div>
         )}
         {!isModal && (
@@ -555,7 +565,21 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
+        </div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function OnboardingOrb() {
+  return (
+    <div className="relative mx-auto grid h-64 w-64 place-items-center" aria-hidden>
+      <div className="absolute inset-3 rounded-full border border-[#8ef3eb]/30 bg-[#23d4c1]/10 shadow-[inset_0_0_45px_rgba(142,243,235,.16),0_0_55px_rgba(35,212,193,.22)]" />
+      <div className="absolute h-52 w-52 rounded-[42%] border border-white/25 bg-[linear-gradient(145deg,rgba(255,255,255,.23),rgba(124,92,255,.2)_42%,rgba(35,212,193,.28))] shadow-[20px_26px_35px_rgba(0,0,0,.25)] rotate-[-14deg]" />
+      <div className="relative grid h-32 w-32 place-items-center rounded-[2rem] border border-white/35 bg-[#073E45]/85 shadow-[0_18px_34px_rgba(1,17,28,.42)]"><NammaMark className="h-20 w-20" /></div>
+      <div className="absolute right-0 top-7 rounded-xl border border-white/20 bg-white/15 px-3 py-2 text-[10px] font-bold text-white shadow-xl backdrop-blur-md">VERIFIED PATH</div>
+      <div className="absolute bottom-8 left-[-8px] rounded-xl border border-[#8ef3eb]/30 bg-[#073E45]/85 px-3 py-2 text-[10px] font-bold text-[#bff5ef] shadow-xl">SAFE BY DESIGN</div>
     </div>
   );
 }

@@ -8,20 +8,20 @@ import { FloatingAssistant } from "@/components/assistant/FloatingAssistant";
 
 export const metadata: Metadata = {
   title: {
-    default: "CivicPath Karnataka",
-    template: "%s | CivicPath Karnataka",
+    default: "NammaPath Karnataka",
+    template: "%s | NammaPath Karnataka",
   },
   description:
     "Clear, personalized citizen guidance for Karnataka government services. We explain the path; official portals complete the transaction.",
   keywords: ["government", "Karnataka", "Aadhaar", "PAN", "driving licence", "certificates", "citizen services", "India"],
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   openGraph: {
-    title: "CivicPath Karnataka",
+    title: "NammaPath Karnataka",
     description: "Tell us what you need. We'll show you the path.",
     type: "website",
     locale: "en_IN",
   },
-  twitter: { card: "summary_large_image", title: "CivicPath Karnataka" },
+  twitter: { card: "summary_large_image", title: "NammaPath Karnataka" },
   robots: { index: true, follow: true },
 };
 
@@ -29,7 +29,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#4f6ef7",
+  themeColor: "#073E45",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

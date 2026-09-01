@@ -83,7 +83,7 @@ export default function ServicesPage() {
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">All Services</h1>
         <p className="text-gray-500 mt-1 text-sm sm:text-base">
-          Karnataka government services — guided by Government Work Helper
+          Karnataka government services — guided by NammaPath
         </p>
       </div>
 
