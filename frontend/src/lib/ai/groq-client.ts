@@ -4,7 +4,9 @@ import { SYSTEM_PROMPT, buildUserMessage, buildConversationHistory } from "./sys
 import type { AIContextPayload } from "./system-prompt";
 import type { AIResponse } from "@/types";
 
-const GROQ_MODEL = process.env.GROQ_MODEL || "qwen/qwen3.6-27b";
+// Groq documents this model for its Chat Completions API and free tier.
+// An environment variable can still override it when the project needs to.
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
 const TIMEOUT_MS = 20_000;
 const MAX_RETRIES = 1;
 
