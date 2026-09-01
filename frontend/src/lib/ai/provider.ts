@@ -1,11 +1,12 @@
 // Server-only — Unified AI Provider Abstraction
-// Active Provider: Google Gemini (Free tier)
-// Future Provider: Anthropic Claude (Optional / Switchable via AI_PROVIDER=anthropic)
+// Provider routing. Groq is the recommended default for this project;
+// Gemini remains an automatic fallback when Groq is unavailable.
 import { callGemini, buildFallbackResponse } from "./gemini-client";
+import { callGroq } from "./groq-client";
 import type { AIContextPayload } from "./system-prompt";
 import type { AIResponse } from "@/types";
 
-export type AIProvider = "gemini" | "anthropic";
+export type AIProvider = "groq" | "gemini" | "anthropic";
 
 export interface AIRequestOptions {
   payload: AIContextPayload;
@@ -22,7 +23,18 @@ export interface AIResponseResult {
 }
 
 export async function generateAIResponse(options: AIRequestOptions): Promise<AIResponseResult> {
-  const activeProvider = (process.env.AI_PROVIDER?.toLowerCase() as AIProvider) || "gemini";
+  const activeProvider = (process.env.AI_PROVIDER?.toLowerCase() as AIProvider) || "groq";
+
+  if (activeProvider === "groq") {
+    const groqResult = await callGroq(options);
+    if (groqResult.success && groqResult.response) return { ...groqResult, provider: "groq" };
+
+    // A provider failure or free-tier limit must not make the whole app fail.
+    // Gemini is retained as a quiet fallback for the same request.
+    console.warn("Groq unavailable; trying Gemini fallback:", groqResult.error);
+    const geminiResult = await callGemini(options);
+    return { ...geminiResult, provider: "gemini" };
+  }
 
   // Future option: If explicitly set to "anthropic" and ANTHROPIC_API_KEY is configured
   if (activeProvider === "anthropic") {
