@@ -255,7 +255,7 @@ export function FloatingAssistant() {
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", damping: 16, stiffness: 260 }}
             onClick={() => { setOpen(true); setMinimized(false); }}
-            className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-full pl-4 pr-5 py-3 shadow-xl shadow-brand-500/30 transition-colors"
+            className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-50 flex items-center gap-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-full pl-4 pr-5 py-3 shadow-xl shadow-brand-500/30 transition-colors md:bottom-5 md:right-5"
             aria-label="Open CivicPath assistant"
           >
             <MessageCircle className="w-5 h-5" />
@@ -273,7 +273,7 @@ export function FloatingAssistant() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 16 }}
             transition={{ type: "spring", damping: 22, stiffness: 300 }}
-            className="fixed bottom-5 right-5 z-50 flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200"
+            className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-3 z-50 flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200 md:bottom-5 md:right-5"
             style={{
               width: "min(380px, calc(100vw - 2rem))",
               maxHeight: "min(560px, calc(100vh - 6rem))",
@@ -377,7 +377,7 @@ export function FloatingAssistant() {
                         onClick={() => sendMessage(m.response!.follow_up_question!)}
                         className="mt-2 text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold px-2.5 py-1.5 rounded-lg border border-amber-200 text-left transition-colors"
                       >
-                        👉 {m.response.follow_up_question}
+                        <Sparkles className="mr-1 inline h-3 w-3" /> {m.response.follow_up_question}
                       </button>
                     )}
                   </div>

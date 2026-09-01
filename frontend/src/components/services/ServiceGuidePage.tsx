@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2, AlertCircle, XCircle, FileText, ExternalLink,
   Download, ChevronDown, ChevronUp, ShieldCheck, Info,
-  AlertTriangle, User, MapPin, Clock, Bookmark, BookmarkCheck
+  AlertTriangle, User, MapPin, Clock, Bookmark, BookmarkCheck, Copy, ListChecks, Link2, MessageCircle
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -111,10 +111,28 @@ export function ServiceGuidePage({ service }: Props) {
     mergedAnswers
   );
 
-  const handleOfficialPortal = () => {
-    trackEvent("official_portal_clicked", { service_id: service.id, slug: service.slug });
-    window.open(service.official_url, "_blank", "noopener,noreferrer");
+  // Canonical official entry points for the requested service families. This
+  // keeps the citizen hand-off predictable even if older seed data has a
+  // deeper official URL.
+  const officialUrl = service.slug.startsWith("aadhaar-")
+    ? "https://myaadhaar.uidai.gov.in/"
+    : ["income-certificate", "caste-certificate", "ration-card"].includes(service.slug)
+    ? "https://sevasindhu.karnataka.gov.in/"
+    : service.official_url;
+  const officialDomain = (() => {
+    try { return new URL(officialUrl).hostname; } catch { return officialUrl; }
+  })();
+
+  const copyOfficialUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(officialUrl);
+      toast.success("Official URL copied");
+    } catch {
+      toast.error("Could not copy the official URL.");
+    }
   };
+
+  const openEligibility = () => document.getElementById("eligibility")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const handleDownloadPDF = async () => {
     setPdfLoading(true);
@@ -145,7 +163,7 @@ export function ServiceGuidePage({ service }: Props) {
   const serviceDesc = t(service.description, language);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-28 sm:py-8 md:pb-8">
       {/* ── Personalized context bar ── */}
       {(guestProfile.age_bracket || guestProfile.category) && (
         <motion.div
@@ -197,6 +215,14 @@ export function ServiceGuidePage({ service }: Props) {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">{serviceName}</h1>
         <p className="text-gray-600 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">{serviceDesc}</p>
       </div>
+
+      <nav aria-label="Service guide sections" className="sticky top-16 z-20 -mx-4 mb-5 overflow-x-auto border-y border-brand-100 bg-white/95 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:px-3">
+        <div className="flex min-w-max gap-1.5">
+          {[["eligibility", "Eligibility"], ["documents", "Documents"], ["steps", "Steps"], ["official-portal", "Official portal"]].map(([id, label]) => (
+            <a key={id} href={`#${id}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50 focus-visible:bg-brand-50">{label}</a>
+          ))}
+        </div>
+      </nav>
 
       {/* ── Dynamic Single-Question Prompt ── */}
       {service.questions?.length > 0 && eligibility.status === "needs_information" && (
@@ -302,22 +328,27 @@ export function ServiceGuidePage({ service }: Props) {
           <div className="lg:sticky lg:top-24 space-y-4">
 
             {/* Official Portal CTA Card */}
-            <Card padding="md" className="border-brand-300 bg-brand-50/60 shadow-md">
+            <Card padding="md" className="border-brand-300 bg-brand-50/60 shadow-md" id="official-portal">
               <div className="flex items-center gap-1.5 text-xs text-brand-700 font-bold mb-3 uppercase tracking-wider">
                 <ShieldCheck className="w-4 h-4 text-brand-600" /> Official Government Portal
               </div>
-              <Button size="lg" className="w-full font-bold shadow-md shadow-brand-500/20" onClick={handleOfficialPortal}
-                rightIcon={<ExternalLink className="w-4 h-4" />}>
-                {t(service.official_url_label, language) || "Continue on Official Website"}
-              </Button>
-              <p className="text-xs text-gray-500 mt-3 text-center leading-relaxed">
-                “Citizen tells us what they need. We figure out the path. The official government system completes the transaction.”
-              </p>
+              <a href={officialUrl} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("official_portal_clicked", { service_id: service.id, slug: service.slug })} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 text-center text-sm font-bold text-white shadow-md shadow-brand-500/20 transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
+                {t(service.official_url_label, language) || "Open official website"}<ExternalLink className="w-4 h-4 shrink-0" />
+              </a>
+              <p className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-brand-800"><Link2 className="w-3.5 h-3.5" /> Official portal: {officialDomain}</p>
+              <p className="text-xs text-gray-500 mt-3 text-center leading-relaxed">CivicPath explains the verified path. The official government system completes the transaction.</p>
               {service.last_verified_on && (
                 <p className="text-[11px] text-gray-400 text-center mt-2 border-t border-brand-200/50 pt-2">
                   Portal URL verified: {formatDate(service.last_verified_on)}
                 </p>
               )}
+            </Card>
+
+            <Card padding="md" className="space-y-2.5">
+              <h3 className="font-bold text-gray-900 text-sm">Guide actions</h3>
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={copyOfficialUrl} leftIcon={<Copy className="w-4 h-4" />}>Copy official URL</Button>
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={toggleBookmark} loading={bookmarkLoading} leftIcon={<Bookmark className="w-4 h-4" />}>{isBookmarked ? "Official checklist saved" : "Save official checklist"}</Button>
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={openEligibility} leftIcon={<ListChecks className="w-4 h-4" />}>Check eligibility interactively</Button>
             </Card>
 
             {/* Fee Section */}
@@ -361,9 +392,9 @@ export function ServiceGuidePage({ service }: Props) {
             </Card>
 
             {/* Ask AI Assistant Widget */}
-            <Link href={`/chat?q=${encodeURIComponent(`Guide me on ${t(service.name, language)}`)}`}>
+            <Link href={`/chat?q=${encodeURIComponent(`Guide me on ${t(service.name, language)}`)}&service_slug=${service.slug}`}>
               <Card hover padding="md" className="border-dashed text-center bg-gray-50/50">
-                <p className="text-sm font-semibold text-brand-600">💬 Ask the Assistant</p>
+                <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-brand-600"><MessageCircle className="w-4 h-4" /> Ask the Assistant</p>
                 <p className="text-xs text-gray-400 mt-0.5">Need help with documents or eligibility?</p>
               </Card>
             </Link>

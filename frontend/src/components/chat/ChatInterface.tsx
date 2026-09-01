@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, RotateCcw, AlertTriangle, Info, ExternalLink, Sparkles, ArrowUpRight } from "lucide-react";
+import { Send, RotateCcw, AlertTriangle, Info, ExternalLink, Sparkles, ArrowUpRight, Car, FileText, Vote, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { useApp } from "@/components/providers";
@@ -330,11 +330,9 @@ function ServiceCard({ service }: { service: MatchedService }) {
 }
 
 function EmptyState({ onSuggestion }: { onSuggestion: (s: string) => void }) {
-  const suggestions = [
-    { q: "I want to renew my driving licence", emoji: "🚗" },
-    { q: "I need an income certificate", emoji: "💰" },
-    { q: "How do I update my Aadhaar address?", emoji: "🪪" },
-    { q: "My voter ID has a spelling error", emoji: "🗳️" },
+  const suggestions: Array<{ q: string; icon: LucideIcon }> = [
+    { q: "I want to renew my driving licence", icon: Car }, { q: "I need an income certificate", icon: FileText },
+    { q: "How do I update my Aadhaar address?", icon: FileText }, { q: "My voter ID has a spelling error", icon: Vote },
   ];
   return (
     <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center px-4">
@@ -347,7 +345,7 @@ function EmptyState({ onSuggestion }: { onSuggestion: (s: string) => void }) {
         {suggestions.map((s) => (
           <button key={s.q} onClick={() => onSuggestion(s.q)}
             className="flex items-center gap-2.5 text-sm text-left text-gray-700 bg-gray-50 border border-gray-200 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 rounded-xl px-4 py-3 transition-all">
-            <span>{s.emoji}</span> {s.q}
+            <s.icon className="h-4 w-4 shrink-0 text-brand-600" /> {s.q}
           </button>
         ))}
       </div>

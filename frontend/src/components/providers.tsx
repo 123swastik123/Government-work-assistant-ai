@@ -96,11 +96,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const markOnboarded = useCallback(() => {
     try { localStorage.setItem(ONBOARDING_KEY, "true"); } catch { /* ignore */ }
+    document.cookie = "civicpath_onboarding=v1; path=/; max-age=31536000; samesite=lax";
     setHasOnboarded(true);
   }, []);
 
   const resetOnboarding = useCallback(() => {
     try { localStorage.removeItem(ONBOARDING_KEY); } catch { /* ignore */ }
+    document.cookie = "civicpath_onboarding=; path=/; max-age=0; samesite=lax";
     setHasOnboarded(false);
   }, []);
 

@@ -43,7 +43,7 @@ export function BookmarksClient({ bookmarks: initial }: { bookmarks: Bookmark[] 
 
       {bookmarks.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-4xl mb-3">🔖</p>
+          <BookmarkIcon className="mx-auto mb-3 h-9 w-9 text-brand-500" />
           <h3 className="font-semibold text-gray-700 mb-2">No bookmarks yet</h3>
           <p className="text-sm text-gray-400 mb-6">Save service guides here for quick access.</p>
           <Link href="/services">

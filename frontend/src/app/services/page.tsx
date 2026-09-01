@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter, ChevronDown } from "lucide-react";
+import { Search, Filter, ChevronDown, SearchX } from "lucide-react";
 import { Badge, VerificationBadge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { SkeletonCard } from "@/components/ui/Spinner";
@@ -147,7 +147,7 @@ export default function ServicesPage() {
       {/* Empty state */}
       {!loading && !error && filtered.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-4xl mb-3">🔍</p>
+          <SearchX className="mx-auto mb-3 h-10 w-10 text-brand-500" />
           <h3 className="font-semibold text-gray-700">No services found</h3>
           <p className="text-sm text-gray-400 mt-1">
             Try a different search or{" "}

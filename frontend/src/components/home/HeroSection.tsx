@@ -2,18 +2,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Shield } from "lucide-react";
+import { ArrowRight, Sparkles, ShieldCheck, LockKeyhole, Zap, BadgeCheck, Car, FileText, Vote, CreditCard, Baby, Plane, Wheat, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-const CHIPS = [
-  { label: "Driving Licence Renewal", emoji: "🚗" },
-  { label: "Aadhaar Update", emoji: "🪪" },
-  { label: "Income Certificate", emoji: "📋" },
-  { label: "Voter ID", emoji: "🗳️" },
-  { label: "PAN Card", emoji: "💳" },
-  { label: "Birth Certificate", emoji: "👶" },
-  { label: "Passport", emoji: "✈️" },
-  { label: "Ration Card", emoji: "🧺" },
+const CHIPS: Array<{ label: string; icon: LucideIcon }> = [
+  { label: "Driving Licence Renewal", icon: Car }, { label: "Aadhaar Update", icon: FileText },
+  { label: "Income Certificate", icon: FileText }, { label: "Voter ID", icon: Vote },
+  { label: "PAN Card", icon: CreditCard }, { label: "Birth Certificate", icon: Baby },
+  { label: "Passport", icon: Plane }, { label: "Ration Card", icon: Wheat },
 ];
 
 const PLACEHOLDERS = [
@@ -36,8 +32,8 @@ export function HeroSection() {
       {/* ── Animated gradient background ── */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-brand-600/20 rounded-full blur-[120px]" />
-        <div className="absolute top-32 -right-32 w-72 h-72 bg-purple-600/15 rounded-full blur-[80px]" />
-        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-saffron-500/10 rounded-full blur-[90px]" />
+        <div className="absolute top-32 -right-32 w-72 h-72 bg-cyan-400/10 rounded-full blur-[80px]" />
+        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-brand-400/10 rounded-full blur-[90px]" />
       </div>
 
       {/* ── SVG grid pattern ── */}
@@ -112,7 +108,7 @@ export function HeroSection() {
           {CHIPS.map((chip) => (
             <button key={chip.label} onClick={() => router.push(`/chat?q=${encodeURIComponent(chip.label)}`)}
               className="flex items-center gap-1.5 text-sm text-gray-300 bg-white/5 border border-white/10 hover:border-brand-500/50 hover:bg-brand-500/10 hover:text-brand-300 px-3.5 py-1.5 rounded-full transition-all duration-200">
-              <span>{chip.emoji}</span> {chip.label}
+              <chip.icon className="w-3.5 h-3.5" /> {chip.label}
             </button>
           ))}
         </motion.div>
@@ -121,13 +117,11 @@ export function HeroSection() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.35 }}
           className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-500">
           {[
-            { icon: "🛡️", text: "Verified information" },
-            { icon: "🔒", text: "No credentials collected" },
-            { icon: "⚡", text: "Instant guidance" },
-            { icon: "🆓", text: "Always free" },
+            { icon: ShieldCheck, text: "Verified information" }, { icon: LockKeyhole, text: "No credentials collected" },
+            { icon: Zap, text: "Clear next steps" }, { icon: BadgeCheck, text: "Free for citizens" },
           ].map((t) => (
             <div key={t.text} className="flex items-center gap-1.5">
-              <span>{t.icon}</span> {t.text}
+              <t.icon className="w-3.5 h-3.5 text-brand-300" /> {t.text}
             </div>
           ))}
         </motion.div>

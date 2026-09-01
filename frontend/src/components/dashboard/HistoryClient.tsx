@@ -54,7 +54,7 @@ export function HistoryClient({ history: initial }: { history: HistoryItem[] }) 
 
       {history.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-4xl mb-3">🕐</p>
+          <History className="mx-auto mb-3 h-9 w-9 text-brand-500" />
           <h3 className="font-semibold text-gray-700 mb-2">No history yet</h3>
           <p className="text-sm text-gray-400 mb-6">Your guidance sessions will appear here.</p>
           <Link href="/chat">

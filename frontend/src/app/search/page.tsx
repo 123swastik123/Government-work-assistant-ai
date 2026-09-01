@@ -3,7 +3,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ArrowRight, Sparkles } from "lucide-react";
+import { Search, ArrowRight, Sparkles, SearchX } from "lucide-react";
 import { Badge, VerificationBadge } from "@/components/ui/Badge";
 import { SkeletonCard } from "@/components/ui/Spinner";
 import { useApp } from "@/components/providers";
@@ -202,7 +202,7 @@ function SearchPageInner() {
 function NoResults({ query, onAI }: { query: string; onAI: () => void }) {
   return (
     <div className="text-center py-12">
-      <p className="text-3xl mb-3">🔍</p>
+      <SearchX className="mx-auto mb-3 h-9 w-9 text-brand-500" />
       <h3 className="font-semibold text-gray-700 mb-1">No results for &ldquo;{query}&rdquo;</h3>
       <p className="text-sm text-gray-400 mb-5">
         Try different words, or let the AI assistant help you.

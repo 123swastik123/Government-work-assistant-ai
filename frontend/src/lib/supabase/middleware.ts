@@ -3,6 +3,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured } from "./config";
 
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  // A new visitor should enter the guided setup before the homepage renders.
+  // Only `/` is gated: shared guides, official links, and legal pages remain
+  // directly accessible.
+  if (path === "/" && request.cookies.get("civicpath_onboarding")?.value !== "v1") {
+    const welcomeUrl = request.nextUrl.clone();
+    welcomeUrl.pathname = "/onboarding";
+    welcomeUrl.searchParams.set("welcome", "1");
+    return NextResponse.redirect(welcomeUrl);
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!isSupabaseConfigured() || !supabaseUrl || !supabaseAnonKey) {
@@ -26,7 +37,6 @@ export async function updateSession(request: NextRequest) {
   });
 
   const { data: { user } } = await supabase.auth.getUser();
-  const path = request.nextUrl.pathname;
   if (path.startsWith("/admin") && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/auth/login";

@@ -2,18 +2,18 @@
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ArrowRight, SkipForward, Check, Sparkles, Building2, MapPin, ShieldCheck } from "lucide-react";
+import { ChevronLeft, ArrowRight, Check, Building2, MapPin, ShieldCheck, Languages, FileText, Car, Vote, House, Landmark, BriefcaseBusiness, HeartHandshake, Scale, GraduationCap, HandHeart, Wheat, type LucideIcon } from "lucide-react";
 import { useApp } from "@/components/providers";
-import { getSeededServiceBySlug, SEED_SERVICES } from "@/lib/services/seed-data";
+import { getSeededServiceBySlug } from "@/lib/services/seed-data";
 import { t } from "@/lib/utils";
 import type { AgeGroup, Language, ServiceQuestion } from "@/types";
 
 // ─── Data ──────────────────────────────────────────────────────
 
 const LANGUAGES = [
-  { value: "en" as Language, label: "English", native: "English", flag: "🇬🇧" },
-  { value: "hi" as Language, label: "Hindi", native: "हिन्दी", flag: "🇮🇳" },
-  { value: "kn" as Language, label: "Kannada", native: "ಕನ್ನಡ", flag: "🇮🇳" },
+  { value: "en" as Language, label: "English", native: "English", code: "EN" },
+  { value: "hi" as Language, label: "Hindi", native: "हिन्दी", code: "हि" },
+  { value: "kn" as Language, label: "Kannada", native: "ಕನ್ನಡ", code: "ಕಂ" },
 ];
 
 const AGE_GROUPS = [
@@ -25,60 +25,62 @@ const AGE_GROUPS = [
   { value: "60_plus" as AgeGroup, label: "60+", sub: "Senior" },
 ];
 
-const CATEGORIES = [
-  { value: "identity-documents", label: "Identity & Documents", emoji: "🪪", desc: "Aadhaar, PAN, Passport" },
-  { value: "driving-transport", label: "Driving & Transport", emoji: "🚗", desc: "Licence, RC, Vehicle" },
-  { value: "certificates", label: "Certificates", emoji: "📋", desc: "Income, Caste, Birth" },
-  { value: "voting", label: "Voting", emoji: "🗳️", desc: "Voter ID, Registration" },
-  { value: "property-land", label: "Property & Land", emoji: "🏠", desc: "Khata, EC, RTC Pahani" },
-  { value: "tax-finance", label: "Tax & Finance", emoji: "🏦", desc: "Property Tax, EPF" },
-  { value: "employment-benefits", label: "Employment", emoji: "💼", desc: "EPF, UAN services" },
-  { value: "family-marriage", label: "Family & Marriage", emoji: "❤️", desc: "Marriage Certificate" },
-  { value: "police-verification", label: "Police & Verification", emoji: "🛡️", desc: "PCC, Clearance" },
-  { value: "ration-food", label: "Ration & Food", emoji: "🧺", desc: "Ration Card (Ahara)" },
+const CATEGORIES: Array<{ value: string; label: string; icon: LucideIcon; desc: string }> = [
+  { value: "identity-documents", label: "Identity & Documents", icon: FileText, desc: "Aadhaar, PAN, Passport" },
+  { value: "driving-transport", label: "Driving & Transport", icon: Car, desc: "Licence, RC, Vehicle" },
+  { value: "certificates", label: "Certificates", icon: FileText, desc: "Income, Caste, Birth" },
+  { value: "voting", label: "Voting", icon: Vote, desc: "Voter ID, Registration" },
+  { value: "property-land", label: "Property & Land", icon: House, desc: "Khata, EC, RTC Pahani" },
+  { value: "tax-finance", label: "Tax & Finance", icon: Landmark, desc: "Property Tax, EPF" },
+  { value: "employment-benefits", label: "Employment", icon: BriefcaseBusiness, desc: "EPF, UAN services" },
+  { value: "family-marriage", label: "Family & Marriage", icon: HeartHandshake, desc: "Marriage Certificate" },
+  { value: "police-verification", label: "Legal & Verification", icon: Scale, desc: "PCC, Clearance" },
+  { value: "ration-food", label: "Ration & Food", icon: Wheat, desc: "Ration Card (Ahara)" },
+  { value: "education", label: "Education", icon: GraduationCap, desc: "Scholarships, admissions" },
+  { value: "pensions", label: "Pensions & Welfare", icon: HandHeart, desc: "Senior and welfare support" },
 ];
 
 // Services per category for adaptive suggestions
-const CATEGORY_SERVICES: Record<string, Array<{ slug: string; label: string; emoji: string }>> = {
+const CATEGORY_SERVICES: Record<string, Array<{ slug: string; label: string; icon: LucideIcon }>> = {
   "identity-documents": [
-    { slug: "aadhaar-new-enrollment", label: "New Aadhaar", emoji: "🪪" },
-    { slug: "aadhaar-update", label: "Aadhaar Update", emoji: "✏️" },
-    { slug: "pan-card-new", label: "New PAN Card", emoji: "💳" },
-    { slug: "passport", label: "Passport (Fresh/Re-issue)", emoji: "✈️" },
+    { slug: "aadhaar-new-enrollment", label: "New Aadhaar", icon: FileText },
+    { slug: "aadhaar-update", label: "Aadhaar Update", icon: FileText },
+    { slug: "pan-card-new", label: "New PAN Card", icon: FileText },
+    { slug: "passport", label: "Passport (Fresh/Re-issue)", icon: FileText },
   ],
   "driving-transport": [
-    { slug: "driving-licence-renewal", label: "Driving Licence Renewal", emoji: "🔄" },
-    { slug: "learners-licence", label: "Learner's Licence (LL)", emoji: "📝" },
-    { slug: "permanent-driving-licence", label: "Permanent DL", emoji: "🚗" },
+    { slug: "driving-licence-renewal", label: "Driving Licence Renewal", icon: Car },
+    { slug: "learners-licence", label: "Learner's Licence (LL)", icon: Car },
+    { slug: "permanent-driving-licence", label: "Permanent DL", icon: Car },
   ],
   "certificates": [
-    { slug: "income-certificate", label: "Income Certificate", emoji: "💰" },
-    { slug: "caste-certificate", label: "Caste Certificate", emoji: "📋" },
-    { slug: "birth-certificate", label: "Birth Certificate", emoji: "👶" },
+    { slug: "income-certificate", label: "Income Certificate", icon: FileText },
+    { slug: "caste-certificate", label: "Caste Certificate", icon: FileText },
+    { slug: "birth-certificate", label: "Birth Certificate", icon: FileText },
   ],
   "voting": [
-    { slug: "voter-id-new", label: "New Voter ID Card", emoji: "🗳️" },
+    { slug: "voter-id-new", label: "New Voter ID Card", icon: Vote },
   ],
   "property-land": [
-    { slug: "khata-certificate-transfer", label: "BBMP Khata Transfer", emoji: "🏠" },
-    { slug: "encumbrance-certificate", label: "Encumbrance Certificate (EC)", emoji: "📑" },
-    { slug: "rtc-pahani", label: "RTC / Pahani (Bhoomi)", emoji: "🌾" },
+    { slug: "khata-certificate-transfer", label: "BBMP Khata Transfer", icon: House },
+    { slug: "encumbrance-certificate", label: "Encumbrance Certificate (EC)", icon: FileText },
+    { slug: "rtc-pahani", label: "RTC / Pahani (Bhoomi)", icon: Wheat },
   ],
   "tax-finance": [
-    { slug: "property-tax-bbmp", label: "Property Tax (BBMP)", emoji: "🏦" },
-    { slug: "epf-uan-services", label: "EPF / UAN Services", emoji: "💼" },
+    { slug: "property-tax-bbmp", label: "Property Tax (BBMP)", icon: Landmark },
+    { slug: "epf-uan-services", label: "EPF / UAN Services", icon: BriefcaseBusiness },
   ],
   "employment-benefits": [
-    { slug: "epf-uan-services", label: "EPF / UAN Services", emoji: "💼" },
+    { slug: "epf-uan-services", label: "EPF / UAN Services", icon: BriefcaseBusiness },
   ],
   "family-marriage": [
-    { slug: "marriage-certificate", label: "Marriage Registration", emoji: "❤️" },
+    { slug: "marriage-certificate", label: "Marriage Registration", icon: HeartHandshake },
   ],
   "police-verification": [
-    { slug: "police-clearance-certificate", label: "Police Clearance (PCC)", emoji: "🛡️" },
+    { slug: "police-clearance-certificate", label: "Police Clearance (PCC)", icon: Scale },
   ],
   "ration-food": [
-    { slug: "ration-card", label: "Ration Card (Ahara)", emoji: "🧺" },
+    { slug: "ration-card", label: "Ration Card (Ahara)", icon: Wheat },
   ],
 };
 
@@ -86,7 +88,7 @@ function useLabels(lang: Language) {
   const L = {
     en: {
       back: "Back",
-      skip: "Skip",
+      skip: "Explore without personalizing",
       continue: "Continue",
       done: "View My Personalized Guide →",
       finish: "Finish Setup",
@@ -100,7 +102,7 @@ function useLabels(lang: Language) {
     },
     hi: {
       back: "वापस",
-      skip: "छोड़ें",
+      skip: "व्यक्तिगतकरण के बिना देखें",
       continue: "आगे बढ़ें",
       done: "मेरी व्यक्तिगत मार्गदर्शिका देखें →",
       finish: "समाप्त करें",
@@ -114,7 +116,7 @@ function useLabels(lang: Language) {
     },
     kn: {
       back: "ಹಿಂದೆ",
-      skip: "ಬಿಡಿ",
+      skip: "ವೈಯಕ್ತೀಕರಣವಿಲ್ಲದೆ ವೀಕ್ಷಿಸಿ",
       continue: "ಮುಂದುವರಿಯಿರಿ",
       done: "ನನ್ನ ವೈಯಕ್ತಿಕ ಮಾರ್ಗದರ್ಶಿ ನೋಡಿ →",
       finish: "ಪೂರ್ಣಗೊಳಿಸಿ",
@@ -171,8 +173,22 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   }, [selectedServiceSlug]);
 
   const serviceQuestions: ServiceQuestion[] = useMemo(() => {
-    if (!selectedService || !selectedService.questions) return [];
-    return selectedService.questions;
+    if (!selectedService) return [];
+    const bilingual = (en: string): Record<Language, string> => ({ en, hi: en, kn: en });
+    const option = (value: string, en: string) => ({ value, label: bilingual(en) });
+    const question = (id: string, type: "select" | "boolean", label: string, options?: ReturnType<typeof option>[]): ServiceQuestion => ({ id, type, label: bilingual(label), options, required: false, eligibility_relevant: false });
+    if (selectedService.slug.startsWith("aadhaar-")) return [
+      question("aadhaar_goal", "select", "What do you need to do with Aadhaar?", [option("mobile_update", "Update mobile number"), option("address_update", "Change address"), option("pvc_card", "Order PVC card"), option("download_eaadhaar", "Download e-Aadhaar"), option("child_mbu", "Child biometric update")]),
+      question("has_registered_mobile", "boolean", "Do you have access to the mobile number already registered with Aadhaar?"),
+      question("has_original_supporting_document", "boolean", "Do you have an original supporting document available, if your update needs one?"),
+    ];
+    if (["income-certificate", "caste-certificate", "ration-card"].includes(selectedService.slug)) return [
+      question("district_region", "select", "Which Karnataka region best matches you?", [option("bengaluru_urban", "Bengaluru Urban"), option("bengaluru_rural", "Bengaluru Rural"), option("other_karnataka", "Another Karnataka district"), option("not_sure", "Not sure")]),
+      question("locality_administration", "select", "Which local administration best matches your area?", [option("bbmp", "BBMP"), option("urban", "Other town or city"), option("rural", "Village / rural area")]),
+      question("ration_card_status", "select", "What is your ration-card status?", [option("bpl", "BPL card"), option("apl", "APL card"), option("no_card", "No ration card"), option("not_sure", "Not sure")]),
+      question("scheme_context", "select", "How are you using this guidance?", [option("self", "For myself"), option("household", "For my household"), option("information", "I am only checking information")]),
+    ];
+    return (selectedService.questions ?? []).slice(0, 2);
   }, [selectedService]);
 
   // Steps definition
@@ -184,7 +200,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     if (categoryServices.length > 0) {
       count += 1; // service selection step
       if (selectedServiceSlug && serviceQuestions.length > 0) {
-        count += Math.min(serviceQuestions.length, 2); // max 2 dynamic questions in onboarding
+        count += Math.min(serviceQuestions.length, 4); // concise, service-aware questions only
       }
     }
     return count;
@@ -268,7 +284,8 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   const pickService = (slug: string) => {
     setSelectedServiceSlug(slug);
     const svc = getSeededServiceBySlug(slug);
-    if (svc && svc.questions && svc.questions.length > 0) {
+    const hasTailoredQuestions = slug.startsWith("aadhaar-") || ["income-certificate", "caste-certificate", "ration-card"].includes(slug) || Boolean(svc?.questions?.length);
+    if (hasTailoredQuestions) {
       setTimeout(goNext, 250);
     } else {
       setTimeout(finish, 250);
@@ -320,6 +337,12 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
             <div><p className="font-bold text-white tracking-tight">CivicPath Karnataka</p><p className="text-xs text-cyan-100/70">A clearer path to public services</p></div>
           </div>
         )}
+        {!isModal && (
+          <p className="mb-5 flex items-start gap-2 text-xs text-cyan-50/80 leading-relaxed">
+            <ShieldCheck className="w-4 h-4 shrink-0 text-cyan-200" />
+            We provide official guidance. We never collect or store identity numbers, passwords, or OTPs.
+          </p>
+        )}
         {/* Progress Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
@@ -330,7 +353,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
               onClick={skip}
               className="text-xs text-gray-400 hover:text-white flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
             >
-              <SkipForward className="w-3.5 h-3.5" /> {L.skip}
+              {L.skip}
             </button>
           </div>
           <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -364,7 +387,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
                         selected={selectedLang === lang.value}
                         onClick={() => pickLang(lang.value)}
                       >
-                        <span className="text-2xl">{lang.flag}</span>
+                        <span className="w-9 h-9 rounded-xl bg-brand-500/15 text-brand-100 border border-brand-300/20 inline-flex items-center justify-center text-xs font-extrabold">{lang.code}</span>
                         <div className="flex-1">
                           <p className="font-semibold text-white text-base">{lang.native}</p>
                           <p className="text-xs text-gray-400">{lang.label}</p>
@@ -379,7 +402,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
               {currentStepView === "state" && (
                 <StepShell title={L.q_state}>
                   <OptionCard selected onClick={goNext}>
-                    <span className="text-3xl">🇮🇳</span>
+                    <Landmark className="w-7 h-7 text-brand-300" />
                     <div className="flex-1">
                       <p className="font-bold text-white text-base">Karnataka</p>
                       <p className="text-xs text-gray-400">Launch State · All 31 Districts Supported</p>
@@ -439,7 +462,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
                         onClick={() => pickCategory(cat.value)}
                         compact
                       >
-                        <span className="text-xl shrink-0">{cat.emoji}</span>
+                        <cat.icon className="w-5 h-5 shrink-0 text-brand-300" />
                         <div className="min-w-0">
                           <p className="font-semibold text-white text-xs leading-tight truncate">{cat.label}</p>
                           <p className="text-[10px] text-gray-400 leading-tight mt-0.5 truncate">{cat.desc}</p>
@@ -460,7 +483,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
                         selected={selectedServiceSlug === svc.slug}
                         onClick={() => pickService(svc.slug)}
                       >
-                        <span className="text-xl">{svc.emoji}</span>
+                        <svc.icon className="w-5 h-5 text-brand-300" />
                         <p className="font-semibold text-white text-sm flex-1">{svc.label}</p>
                       </OptionCard>
                     ))}

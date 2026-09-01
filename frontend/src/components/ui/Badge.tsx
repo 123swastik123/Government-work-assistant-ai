@@ -45,7 +45,7 @@ export function VerificationBadge({
   if (status === "verified") {
     return (
       <div className="flex flex-col items-start gap-0.5">
-        <Badge variant="verified" showIcon>🛡️ Verified</Badge>
+        <Badge variant="verified" showIcon>Verified</Badge>
         {lastVerified && (
           <span className="text-[10px] text-gray-400 pl-1">
             {new Date(lastVerified).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}

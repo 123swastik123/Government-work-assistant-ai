@@ -1,17 +1,13 @@
 "use client";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Baby, Car, CreditCard, FileText, Plane, Vote, Wheat, type LucideIcon } from "lucide-react";
 
-const SERVICES = [
-  { slug: "aadhaar-update", name: "Aadhaar Update", category: "Identity", emoji: "🪪", color: "from-blue-500/10 to-blue-600/5 border-blue-200/50 text-blue-700" },
-  { slug: "driving-licence-renewal", name: "DL Renewal", category: "Transport", emoji: "🚗", color: "from-emerald-500/10 to-emerald-600/5 border-emerald-200/50 text-emerald-700" },
-  { slug: "income-certificate", name: "Income Certificate", category: "Certificates", emoji: "💰", color: "from-purple-500/10 to-purple-600/5 border-purple-200/50 text-purple-700" },
-  { slug: "voter-id-new", name: "Voter ID", category: "Voting", emoji: "🗳️", color: "from-orange-500/10 to-orange-600/5 border-orange-200/50 text-orange-700" },
-  { slug: "pan-card-new", name: "PAN Card", category: "Identity", emoji: "💳", color: "from-pink-500/10 to-pink-600/5 border-pink-200/50 text-pink-700" },
-  { slug: "birth-certificate", name: "Birth Certificate", category: "Certificates", emoji: "👶", color: "from-teal-500/10 to-teal-600/5 border-teal-200/50 text-teal-700" },
-  { slug: "ration-card", name: "Ration Card", category: "Food", emoji: "🧺", color: "from-amber-500/10 to-amber-600/5 border-amber-200/50 text-amber-700" },
-  { slug: "passport", name: "Passport", category: "Identity", emoji: "✈️", color: "from-indigo-500/10 to-indigo-600/5 border-indigo-200/50 text-indigo-700" },
+const SERVICES: Array<{ slug: string; name: string; category: string; icon: LucideIcon }> = [
+  { slug: "aadhaar-update", name: "Aadhaar Update", category: "Identity", icon: FileText }, { slug: "driving-licence-renewal", name: "DL Renewal", category: "Transport", icon: Car },
+  { slug: "income-certificate", name: "Income Certificate", category: "Certificates", icon: FileText }, { slug: "voter-id-new", name: "Voter ID", category: "Voting", icon: Vote },
+  { slug: "pan-card-new", name: "PAN Card", category: "Identity", icon: CreditCard }, { slug: "birth-certificate", name: "Birth Certificate", category: "Certificates", icon: Baby },
+  { slug: "ration-card", name: "Ration Card", category: "Food", icon: Wheat }, { slug: "passport", name: "Passport", category: "Identity", icon: Plane },
 ];
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
@@ -41,10 +37,9 @@ export function PopularServices() {
           {SERVICES.map((svc) => (
             <motion.div key={svc.slug} variants={item}>
               <Link href={`/services/${svc.slug}`}
-                className={`flex flex-col items-start gap-3 p-4 sm:p-5 rounded-2xl border bg-gradient-to-br ${svc.color} 
-                  hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full`}
+                className="flex flex-col items-start gap-3 rounded-2xl border border-brand-100 bg-gradient-to-br from-white to-brand-50/70 p-4 sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md group h-full"
               >
-                <span className="text-2xl sm:text-3xl">{svc.emoji}</span>
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-100 text-brand-700"><svc.icon className="w-5 h-5" /></span>
                 <div className="flex-1">
                   <p className="text-sm sm:text-base font-semibold text-gray-900 group-hover:text-brand-700 transition-colors leading-tight">
                     {svc.name}
