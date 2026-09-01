@@ -21,6 +21,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
   },
+  icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
   twitter: { card: "summary_large_image", title: "NammaPath Karnataka" },
   robots: { index: true, follow: true },
 };

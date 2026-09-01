@@ -242,22 +242,25 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     else router.push(redirectTo);
   };
 
-  const finish = () => {
+  const finish = (result?: { serviceSlug?: string; answers?: Record<string, unknown> }) => {
+    const finalServiceSlug = result?.serviceSlug ?? selectedServiceSlug;
+    const finalAnswers = result?.answers ?? serviceAnswers;
+    const finalService = finalServiceSlug ? getSeededServiceBySlug(finalServiceSlug) : selectedService;
     updateGuestProfile({
       language: selectedLang,
       age_bracket: selectedAge,
       location_type: selectedLocation,
       category: selectedCategory,
-      collected_answers: serviceAnswers,
+      collected_answers: finalAnswers,
     });
     setLanguage(selectedLang);
     markOnboarded();
     const categoryLabel = CATEGORIES.find((category) => category.value === selectedCategory)?.label ?? "Karnataka citizen services";
-    const personalizedQuery = selectedServiceSlug
-      ? `Guide me on ${selectedService?.name.en ?? "this service"}`
+    const personalizedQuery = finalServiceSlug
+      ? `Guide me on ${finalService?.name.en ?? "this service"}`
       : `Show me verified Karnataka guidance for ${categoryLabel}${selectedLocation ? ` for a ${selectedLocation} resident` : ""}${selectedAge ? ` in the ${selectedAge.replace("_", "–")} age group` : ""}.`;
-    const destination = selectedServiceSlug
-      ? `/chat?q=${encodeURIComponent(personalizedQuery)}&service_slug=${selectedServiceSlug}`
+    const destination = finalServiceSlug
+      ? `/chat?q=${encodeURIComponent(personalizedQuery)}&service_slug=${finalServiceSlug}`
       : `/chat?q=${encodeURIComponent(personalizedQuery)}`;
     if (onComplete) {
       onComplete();
@@ -289,7 +292,12 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   const pickCategory = (cat: string) => {
     setSelectedCategory(cat);
     setSelectedServiceSlug(null);
-    setTimeout(() => goNext(true), 250);
+    // Do not rely on the old render's categoryServices here. That could make
+    // onboarding finish before the user saw Income/Caste/Birth choices.
+    setTimeout(() => {
+      setDirection(1);
+      setStepIdx(5);
+    }, 250);
   };
 
   const pickService = (slug: string) => {
@@ -299,13 +307,20 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     if (hasTailoredQuestions) {
       setTimeout(() => goNext(true), 250);
     } else {
-      setTimeout(finish, 250);
+      setTimeout(() => finish({ serviceSlug: slug }), 250);
     }
   };
 
   const answerQuestion = (qId: string, value: unknown) => {
-    setServiceAnswers((prev) => ({ ...prev, [qId]: value }));
-    setTimeout(() => goNext(true), 250);
+    const updatedAnswers = { ...serviceAnswers, [qId]: value };
+    setServiceAnswers(updatedAnswers);
+    // The final answer must be saved before navigating. Otherwise the result
+    // page can be generated with the previous answer set.
+    if (stepIdx >= totalSteps - 1) {
+      setTimeout(() => finish({ answers: updatedAnswers }), 250);
+    } else {
+      setTimeout(() => goNext(true), 250);
+    }
   };
 
   // Determine current step view
@@ -317,7 +332,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   else if (stepIdx === 2) currentStepView = "location";
   else if (stepIdx === 3) currentStepView = "age";
   else if (stepIdx === 4) currentStepView = "category";
-  else if (stepIdx === 5 && categoryServices.length > 0) currentStepView = "service";
+  else if (stepIdx === 5) currentStepView = "service";
   else if (stepIdx >= 6 && serviceQuestions.length > 0) {
     currentStepView = "dynamic_question";
     activeQuestion = serviceQuestions[stepIdx - 6] ?? null;
@@ -520,12 +535,11 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
                         <p className="font-semibold text-white text-sm flex-1">{svc.label}</p>
                       </OptionCard>
                     ))}
-                    <button
-                      onClick={finish}
-                      className="w-full text-xs text-gray-400 hover:text-brand-300 text-center py-2 transition-colors mt-2"
-                    >
-                      Not listed / explore all services →
-                    </button>
+                    {categoryServices.length > 0 ? (
+                      <p className="pt-2 text-center text-xs leading-relaxed text-[#b8d0d2]">Choose one service to receive its personalised result. You can ask the assistant anything after the result opens.</p>
+                    ) : (
+                      <p className="rounded-xl border border-amber-200/40 bg-amber-500/10 p-3 text-center text-xs leading-relaxed text-amber-100">We do not have a verified service guide in this category yet. Choose another category so we never invent a government process.</p>
+                    )}
                   </div>
                 </StepShell>
               )}

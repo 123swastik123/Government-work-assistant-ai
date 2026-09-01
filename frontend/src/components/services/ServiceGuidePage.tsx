@@ -299,7 +299,7 @@ export function ServiceGuidePage({ service }: Props) {
           <div id="steps">
             <Section title="Step-by-Step Official Process" icon={<ChevronDown className="w-4 h-4" />}>
               {service.steps?.length > 0 ? (
-                <StepsList service={service} language={language} />
+                <StepsList service={service} language={language} portalUrl={officialUrl} />
               ) : (
                 <p className="text-sm text-gray-400">Step breakdown not yet available. Check the official portal.</p>
               )}
@@ -343,6 +343,8 @@ export function ServiceGuidePage({ service }: Props) {
                 </p>
               )}
             </Card>
+
+            <PortalNavigationCard serviceName={serviceName} officialUrl={officialUrl} officialDomain={officialDomain} />
 
             <Card padding="md" className="space-y-2.5">
               <h3 className="font-bold text-gray-900 text-sm">Guide actions</h3>
@@ -484,7 +486,7 @@ function DocumentList({ docs, language }: { docs: DocumentRequirement[]; languag
   );
 }
 
-function StepsList({ service, language }: { service: Service; language: string }) {
+function StepsList({ service, language, portalUrl }: { service: Service; language: string; portalUrl: string }) {
   const [expanded, setExpanded] = useState<number | null>(1); // expand step 1 by default
   return (
     <ol className="space-y-2.5">
@@ -509,7 +511,11 @@ function StepsList({ service, language }: { service: Service; language: string }
             <div className="px-4 pb-4 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-gray-100 bg-gray-50/50 pt-3">
               {t(step.description, language as "en" | "hi" | "kn")}
               <div className="flex gap-2 mt-2.5">
-                {step.is_online && <Badge variant="default" className="text-[10px]">Online portal</Badge>}
+                {step.is_online && (
+                  <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-medium text-brand-700 transition-colors hover:bg-brand-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                    Online portal <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
                 {step.is_offline && <Badge variant="default" className="text-[10px]">In person counter</Badge>}
               </div>
             </div>
@@ -517,6 +523,25 @@ function StepsList({ service, language }: { service: Service; language: string }
         </li>
       ))}
     </ol>
+  );
+}
+
+function PortalNavigationCard({ serviceName, officialUrl, officialDomain }: { serviceName: string; officialUrl: string; officialDomain: string }) {
+  return (
+    <Card padding="md" className="overflow-hidden border-violet-200 bg-[linear-gradient(145deg,#f7f5ff,#effcfb)]">
+      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-violet-700"><Link2 className="h-4 w-4" /> Portal navigation reference</div>
+      <div className="mt-3 rounded-xl border border-violet-200/80 bg-white p-2 shadow-sm" aria-hidden="true">
+        <div className="flex gap-1.5 border-b border-slate-100 pb-2"><span className="h-2 w-2 rounded-full bg-rose-300" /><span className="h-2 w-2 rounded-full bg-amber-300" /><span className="h-2 w-2 rounded-full bg-emerald-300" /><span className="ml-2 h-3 flex-1 rounded bg-slate-100" /></div>
+        <div className="mt-2 grid grid-cols-[1.15fr_.85fr] gap-2"><div className="rounded-lg bg-brand-50 p-2"><div className="h-2 w-2/3 rounded bg-brand-300" /><div className="mt-2 h-1.5 w-full rounded bg-brand-100" /><div className="mt-1.5 h-1.5 w-4/5 rounded bg-brand-100" /><div className="mt-3 h-5 w-3/4 rounded bg-brand-500" /></div><div className="space-y-1.5 rounded-lg border border-slate-100 p-2"><div className="h-2 w-full rounded bg-slate-100" /><div className="h-2 w-4/5 rounded bg-slate-100" /><div className="h-2 w-3/5 rounded bg-slate-100" /></div></div>
+      </div>
+      <ol className="mt-3 space-y-2 text-xs leading-relaxed text-slate-700">
+        <li className="flex gap-2"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-violet-600 text-[10px] font-bold text-white">1</span><span>Open the official portal below.</span></li>
+        <li className="flex gap-2"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-violet-600 text-[10px] font-bold text-white">2</span><span>Look for the service named <strong>{serviceName}</strong>, or its closest official wording.</span></li>
+        <li className="flex gap-2"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-violet-600 text-[10px] font-bold text-white">3</span><span>Follow the official screen prompts. Never share passwords or OTPs with NammaPath.</span></li>
+      </ol>
+      <a href={officialUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2.5 text-xs font-bold text-white transition-colors hover:bg-violet-700"><ExternalLink className="h-4 w-4" />Open {officialDomain}</a>
+      <p className="mt-2 text-[11px] leading-relaxed text-slate-500">Visual orientation only. Government portals can change their layout; always rely on the live official site for the current labels and actions.</p>
+    </Card>
   );
 }
 

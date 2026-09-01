@@ -1,7 +1,7 @@
 "use client";
 import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Mail, Phone, ArrowRight, AlertCircle, CheckCircle2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
@@ -10,19 +10,24 @@ import { NammaMark } from "@/components/brand/NammaMark";
 import toast from "react-hot-toast";
 import { trackEvent } from "@/lib/analytics/events";
 
-type Step = "input" | "sent";
+type AuthMethod = "email" | "phone";
+type Step = "input" | "sent" | "verify_phone";
 
 function AuthFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams?.get("redirectTo") ?? "/dashboard";
 
+  const [method, setMethod] = useState<AuthMethod>("email");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
   const [step, setStep] = useState<Step>("input");
   const [loading, setLoading] = useState(false);
   const [configWarning, setConfigWarning] = useState(false);
 
   const supabase = createClient();
+  const phoneOtpEnabled = process.env.NEXT_PUBLIC_PHONE_OTP_ENABLED === "true";
 
   useEffect(() => {
     setConfigWarning(!isSupabaseConfigured());
@@ -63,6 +68,37 @@ function AuthFormInner() {
     }
   };
 
+  const sendPhoneOtp = async () => {
+    if (!phoneOtpEnabled) return;
+    if (configWarning) { toast.error("Sign-in is not configured for this deployment yet."); return; }
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length !== 10) { toast.error("Enter a valid 10-digit Indian mobile number."); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ phone: `+91${digits}`, options: { shouldCreateUser: true } });
+      if (error) { toast.error(error.message); return; }
+      setStep("verify_phone");
+      toast.success("A six-digit code was sent to your phone.");
+    } catch {
+      toast.error("Could not send the sign-in code. Please try again.");
+    } finally { setLoading(false); }
+  };
+
+  const verifyPhoneOtp = async () => {
+    if (otp.length !== 6) { toast.error("Enter the 6-digit code."); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({ phone: `+91${phone.replace(/\D/g, "")}`, token: otp, type: "sms" });
+      if (error) { toast.error("That code is invalid or expired. Request a new one."); return; }
+      trackEvent("auth_completed");
+      toast.success("Signed in successfully.");
+      router.push(redirectTo);
+      router.refresh();
+    } catch {
+      toast.error("Could not verify the code. Please try again.");
+    } finally { setLoading(false); }
+  };
+
   const signInWithGoogle = async () => {
     if (configWarning) {
       toast.error("Supabase authentication credentials are not yet configured in .env.local.");
@@ -101,7 +137,7 @@ function AuthFormInner() {
           <p className="text-sm text-gray-400 mt-1">
             {step === "input"
               ? "Sign in to save your journeys and bookmarks"
-              : "Open the secure link we sent to your email"}
+              : step === "sent" ? "Open the secure link we sent to your email" : "Enter the code sent to your phone"}
           </p>
         </div>
 
@@ -120,6 +156,13 @@ function AuthFormInner() {
 
           {step === "input" && (
             <div className="space-y-4">
+              {phoneOtpEnabled && (
+                <div className="flex gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
+                  <button type="button" onClick={() => setMethod("email")} className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors ${method === "email" ? "bg-brand-500 text-white" : "text-gray-400 hover:text-white"}`}><Mail className="h-3.5 w-3.5" />Email link</button>
+                  <button type="button" onClick={() => setMethod("phone")} className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors ${method === "phone" ? "bg-brand-500 text-white" : "text-gray-400 hover:text-white"}`}><Phone className="h-3.5 w-3.5" />Phone OTP</button>
+                </div>
+              )}
+              {method === "email" ? <>
                 <Input
                   label="Email address"
                   type="email"
@@ -133,19 +176,24 @@ function AuthFormInner() {
                   required
                   className="bg-white/10 border-white/20 text-white placeholder-gray-500 focus:border-brand-500"
                 />
-              <p className="-mt-2 text-xs leading-relaxed text-[#b8d0d2]">We send a secure sign-in link. NammaPath never asks you to type an OTP, password, Aadhaar, or PAN number.</p>
+              <p className="-mt-2 text-xs leading-relaxed text-[#b8d0d2]">We send a secure sign-in link. NammaPath never asks for your Aadhaar, PAN number, government password, or government OTP.</p>
 
               <Button loading={loading} onClick={sendOTP} className="w-full mt-2" rightIcon={<ArrowRight className="w-4 h-4" />}>
                 Email me a secure sign-in link
               </Button>
+              </> : <>
+                <div><label className="mb-1.5 block text-xs font-medium text-gray-300">Indian mobile number</label><div className="flex gap-2"><span className="flex items-center rounded-xl border border-white/20 bg-white/10 px-3 text-sm font-semibold text-white">+91</span><input type="tel" inputMode="numeric" autoFocus value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, "").slice(0, 10))} onKeyDown={(event) => event.key === "Enter" && sendPhoneOtp()} placeholder="9876543210" className="flex-1 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500" /></div></div>
+                <p className="-mt-2 text-xs leading-relaxed text-[#b8d0d2]">We use this only to send a sign-in code. Never enter an OTP from any government service here.</p>
+                <Button loading={loading} onClick={sendPhoneOtp} className="w-full mt-2" rightIcon={<ArrowRight className="w-4 h-4" />}>Send phone sign-in code</Button>
+              </>}
 
-              <div className="relative flex items-center gap-3 my-3">
+              {method === "email" && <div className="relative flex items-center gap-3 my-3">
                 <div className="flex-1 h-px bg-white/10" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
                 <div className="flex-1 h-px bg-white/10" />
-              </div>
+              </div>}
 
-              <Button
+              {method === "email" && <Button
                 variant="outline"
                 loading={loading}
                 onClick={signInWithGoogle}
@@ -160,7 +208,7 @@ function AuthFormInner() {
                 }
               >
                 Continue with Google
-              </Button>
+              </Button>}
 
               <div className="pt-2 text-center">
                 <button
@@ -205,6 +253,10 @@ function AuthFormInner() {
                 </button>
               </div>
             </div>
+          )}
+
+          {step === "verify_phone" && (
+            <div className="space-y-4"><div className="text-center"><div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-brand-500/30 bg-brand-500/20"><Phone className="h-6 w-6 text-brand-300" /></div><p className="text-xs text-gray-400">Enter the six-digit code sent to</p><p className="mt-0.5 text-sm font-semibold text-white">+91 {phone}</p></div><input type="text" inputMode="numeric" autoComplete="one-time-code" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(event) => event.key === "Enter" && verifyPhoneOtp()} placeholder="123456" maxLength={6} className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3.5 text-center text-2xl font-bold tracking-[.4em] text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500" /><Button loading={loading} disabled={otp.length !== 6} onClick={verifyPhoneOtp} className="w-full" leftIcon={<LogIn className="h-4 w-4" />}>Verify and sign in</Button><div className="flex justify-between pt-1 text-xs"><button onClick={() => { setStep("input"); setOtp(""); }} className="text-gray-400 hover:text-white">← Change number</button><button onClick={sendPhoneOtp} disabled={loading} className="text-brand-300 hover:text-brand-200 disabled:opacity-50">Resend code</button></div></div>
           )}
         </div>
       </div>
