@@ -57,6 +57,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!isSupabaseConfigured()) return;
     try {
       const supabase = createClient();
       supabase.auth.getUser().then(({ data }) => {

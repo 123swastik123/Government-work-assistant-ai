@@ -148,6 +148,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   const [stepIdx, setStepIdx] = useState(0);
   const [direction, setDirection] = useState(1);
   const [selectedLang, setSelectedLang] = useState<Language>(currentLang ?? "en");
+  const [hasChosenLanguage, setHasChosenLanguage] = useState(false);
   const [selectedAge, setSelectedAge] = useState<AgeGroup | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<"urban" | "rural" | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -207,7 +208,8 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     return count;
   }, [categoryServices.length, selectedServiceSlug, serviceQuestions.length]);
 
-  const goNext = () => {
+  const goNext = (fromSelection = false) => {
+    if (!fromSelection && !canContinue) return;
     setDirection(1);
     // If at category step and no services, finish
     if (stepIdx === 4 && categoryServices.length === 0) {
@@ -262,24 +264,25 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
 
   const pickLang = (lang: Language) => {
     setSelectedLang(lang);
+    setHasChosenLanguage(true);
     setLanguage(lang);
-    setTimeout(goNext, 250);
+    setTimeout(() => goNext(true), 250);
   };
 
   const pickAge = (age: AgeGroup) => {
     setSelectedAge(age);
-    setTimeout(goNext, 250);
+    setTimeout(() => goNext(true), 250);
   };
 
   const pickLocation = (location: "urban" | "rural") => {
     setSelectedLocation(location);
-    setTimeout(goNext, 250);
+    setTimeout(() => goNext(true), 250);
   };
 
   const pickCategory = (cat: string) => {
     setSelectedCategory(cat);
     setSelectedServiceSlug(null);
-    setTimeout(goNext, 250);
+    setTimeout(() => goNext(true), 250);
   };
 
   const pickService = (slug: string) => {
@@ -287,7 +290,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     const svc = getSeededServiceBySlug(slug);
     const hasTailoredQuestions = slug.startsWith("aadhaar-") || ["income-certificate", "caste-certificate", "ration-card"].includes(slug) || Boolean(svc?.questions?.length);
     if (hasTailoredQuestions) {
-      setTimeout(goNext, 250);
+      setTimeout(() => goNext(true), 250);
     } else {
       setTimeout(finish, 250);
     }
@@ -295,7 +298,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
 
   const answerQuestion = (qId: string, value: unknown) => {
     setServiceAnswers((prev) => ({ ...prev, [qId]: value }));
-    setTimeout(goNext, 250);
+    setTimeout(() => goNext(true), 250);
   };
 
   // Determine current step view
@@ -314,6 +317,19 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   }
 
   const progress = Math.min((stepIdx + 1) / Math.max(totalSteps, 1), 1);
+  const canContinue = currentStepView === "language"
+    ? hasChosenLanguage
+    : currentStepView === "state"
+      ? true
+      : currentStepView === "location"
+        ? selectedLocation !== null
+        : currentStepView === "age"
+          ? selectedAge !== null
+          : currentStepView === "category"
+            ? selectedCategory !== null
+            : currentStepView === "service"
+              ? selectedServiceSlug !== null
+              : activeQuestion !== null && serviceAnswers[activeQuestion.id] !== undefined;
 
   const variants = {
     enter: (d: number) => ({ opacity: 0, x: d * 28 }),
@@ -558,8 +574,9 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
           </button>
 
           <button
-            onClick={goNext}
-            className="flex items-center gap-2 text-xs font-semibold bg-brand-500 hover:bg-brand-400 active:scale-95 text-white px-4 py-2 rounded-xl transition-all shadow-md shadow-brand-500/20"
+            onClick={() => goNext()}
+            disabled={!canContinue}
+            className="flex items-center gap-2 text-xs font-semibold bg-brand-500 hover:bg-brand-400 active:scale-95 text-white px-4 py-2 rounded-xl transition-all shadow-md shadow-brand-500/20 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-brand-500 disabled:active:scale-100"
           >
             {stepIdx >= totalSteps - 1 ? L.done : L.continue}
             <ArrowRight className="w-3.5 h-3.5" />
