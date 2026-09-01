@@ -9,6 +9,28 @@ import { buildServiceContext } from "@/lib/ai/system-prompt";
 import { getSeededServices, getSeededServiceBySlug } from "@/lib/services/seed-data";
 import type { Language, Service } from "@/types";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { t } from "@/lib/utils";
+import type { AIResponse, EligibilityResult, DocumentRequirement } from "@/types";
+
+function buildVerifiedGuideResponse(service: Service, eligibility: EligibilityResult, documents: DocumentRequirement[], language: Language): AIResponse {
+  const documentNames = documents.filter((doc) => doc.status === "required").slice(0, 4).map((doc) => t(doc.name, language));
+  const stepNames = service.steps.slice(0, 3).map((step) => `${step.step_number}. ${t(step.title, language)}`);
+  const missingQuestion = service.questions.find((question) => eligibility.missing_fields.includes(question.id));
+  const eligibilityLine = eligibility.status === "eligible"
+    ? "Based on the information you provided, you appear eligible under the recorded criteria."
+    : eligibility.status === "not_eligible"
+    ? "Based on the information you provided, you may not meet the recorded criteria. Please verify this with the official portal."
+    : "I can give you the verified process, but one or more details are still needed to confirm eligibility.";
+  return {
+    reply_text: `${t(service.name, language)}\n\n${eligibilityLine}\n\nRequired documents: ${documentNames.join(", ") || "Check the verified guide"}.\n\nNext steps: ${stepNames.join(" · ") || "Open the official portal to continue"}.\n\nFor the actual transaction, use the official portal: ${service.official_url}`,
+    matched_service_id: service.id,
+    is_general_info: false,
+    needs_follow_up: Boolean(missingQuestion),
+    follow_up_question: missingQuestion ? t(missingQuestion.label, language) : null,
+    defer_to_official_portal: true,
+    suggest_for_review: null,
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,9 +41,12 @@ export async function POST(req: NextRequest) {
     }
     const { message, conversation_id, guest_session_id, service_slug, language, guest_profile } = parsed.data;
     const databaseConfigured = isSupabaseConfigured();
+    const isGuestRequest = Boolean(guest_session_id);
 
     let user = null;
-    if (databaseConfigured) try {
+    // Guest guidance must remain immediate and never wait on an optional
+    // database/auth round-trip. Signed-in requests still use Supabase below.
+    if (databaseConfigured && !isGuestRequest) try {
       const supabase = await createClient();
       const authRes = await supabase.auth.getUser();
       user = authRes.data.user;
@@ -53,7 +78,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const admin = databaseConfigured ? getAdminClient() : null;
+    const admin = databaseConfigured && !isGuestRequest ? getAdminClient() : null;
     let convId = conversation_id ?? crypto.randomUUID();
 
     if (admin) try {
@@ -138,6 +163,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // The first hand-off from personalization is deterministic and immediate.
+    // It uses the selected verified record plus the non-sensitive answers,
+    // avoiding an unnecessary model call or quota failure before the citizen
+    // receives their actual guide.
+    if (service_slug && !conversation_id && matchedService && serviceCtx) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          response: buildVerifiedGuideResponse(matchedService, serviceCtx.eligibility_result, serviceCtx.applicable_documents, resolvedLanguage),
+          conversation_id: convId,
+          service: { id: matchedService.id, slug: matchedService.slug, name: matchedService.name, verification_status: matchedService.verification_status, last_verified_on: matchedService.last_verified_on, official_url: matchedService.official_url },
+        },
+      });
+    }
+
     const clientId = user?.id ?? guest_session_id ?? "anonymous";
     const aiResult = await generateAIResponse({
       payload: {
@@ -151,10 +191,17 @@ export async function POST(req: NextRequest) {
       clientId,
     });
 
-    if (aiResult.rateLimited) {
-      return NextResponse.json({ success: false, error: "Too many requests." }, { status: 429 });
+    // A verified service should remain usable even when Gemini is at capacity
+    // or a visitor hits the local safety limit. Never turn this into a dead-end.
+    if (aiResult.rateLimited && !matchedService) {
+      return NextResponse.json({ success: false, error: "The assistant is temporarily busy. Please try again shortly." }, { status: 429 });
     }
-    const aiResponse = aiResult.response!;
+    const aiResponse = aiResult.response ?? (matchedService && serviceCtx
+      ? buildVerifiedGuideResponse(matchedService, serviceCtx.eligibility_result, serviceCtx.applicable_documents, resolvedLanguage)
+      : null);
+    if (!aiResponse) {
+      return NextResponse.json({ success: false, error: "The assistant is temporarily unavailable. Please use the verified service directory." }, { status: 503 });
+    }
 
     if (aiResponse.matched_service_id) {
       const isValid = getSeededServices().some((s) => s.id === aiResponse.matched_service_id);

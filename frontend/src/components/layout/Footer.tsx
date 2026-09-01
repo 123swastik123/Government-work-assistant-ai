@@ -1,7 +1,11 @@
+"use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Shield } from "lucide-react";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname === "/onboarding") return null;
   return (
     <footer className="bg-white border-t border-gray-100 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -19,7 +23,7 @@ export function Footer() {
               The official government system handles the actual transaction.
             </p>
             <p className="text-xs text-gray-400 mt-3 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-              ⚠️ We are not affiliated with any government department. 
+              We are not affiliated with any government department.
               We do not submit applications, make payments, or act as an agent.
             </p>
           </div>

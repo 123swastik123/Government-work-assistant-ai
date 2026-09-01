@@ -21,7 +21,7 @@ const TIMEOUT_MS = 25_000;
 const MAX_RETRIES = 2;
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_RPM = parseInt(process.env.AI_RATE_LIMIT_RPM ?? "20", 10);
+const RATE_LIMIT_RPM = parseInt(process.env.AI_RATE_LIMIT_RPM ?? "60", 10);
 
 function checkRateLimit(clientId: string): { allowed: boolean; retryAfter?: number } {
   const now = Date.now();
@@ -144,9 +144,9 @@ export async function callGemini(options: GeminiCallOptions): Promise<GeminiCall
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => "");
-        if (res.status === 429) {
-          return { success: false, rateLimited: true, error: "Gemini quota / rate limit reached" };
-        }
+        // Provider capacity is not a citizen's request-rate violation. Let the
+        // route choose a verified service-guide fallback when one is available.
+        if (res.status === 429) throw new Error("Gemini provider capacity reached");
         throw new Error(`Gemini API HTTP ${res.status}: ${errorText}`);
       }
 

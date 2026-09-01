@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, ShieldCheck, LockKeyhole, Zap, BadgeCheck, Car, FileText, Vote, CreditCard, Baby, Plane, Wheat, type LucideIcon } from "lucide-react";
+import { ArrowRight, Sparkles, ShieldCheck, LockKeyhole, Zap, BadgeCheck, Car, FileText, Vote, CreditCard, Baby, Plane, Wheat, Landmark, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 const CHIPS: Array<{ label: string; icon: LucideIcon }> = [
@@ -27,13 +27,13 @@ export function HeroSection() {
   const go = () => { if (query.trim()) router.push(`/chat?q=${encodeURIComponent(query.trim())}`); };
 
   return (
-    <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden bg-[#0a0f1e] px-4 pt-12 pb-20">
+    <section className="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center overflow-hidden bg-[#073E45] px-4 pt-12 pb-20">
 
       {/* ── Animated gradient background ── */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-brand-600/20 rounded-full blur-[120px]" />
-        <div className="absolute top-32 -right-32 w-72 h-72 bg-cyan-400/10 rounded-full blur-[80px]" />
-        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-brand-400/10 rounded-full blur-[90px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-[#0B8C92]/30 rounded-full blur-[120px]" />
+        <div className="absolute top-32 -right-32 w-72 h-72 bg-[#39bdb6]/15 rounded-full blur-[80px]" />
+        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-[#087477]/35 rounded-full blur-[90px]" />
       </div>
 
       {/* ── SVG grid pattern ── */}
@@ -53,11 +53,12 @@ export function HeroSection() {
       <FloatingDoc className="absolute bottom-20 right-[8%] opacity-20 hidden xl:block" rotation={-8} duration={5.5} color="#45c68a" label="DL" />
 
       {/* ── Content ── */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto text-center">
+      <div className="relative z-10 w-full max-w-6xl mx-auto grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="text-center lg:text-left">
 
         {/* Badge */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 bg-brand-500/10 border border-brand-500/30 text-brand-300 text-xs font-semibold px-4 py-1.5 rounded-full mb-8 uppercase tracking-widest">
+          className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-[#bff5ef] text-xs font-semibold px-4 py-1.5 rounded-full mb-8 uppercase tracking-widest">
           <Sparkles className="w-3 h-3" />
           Karnataka Pilot · Free for citizens
         </motion.div>
@@ -73,15 +74,15 @@ export function HeroSection() {
         </motion.h1>
 
         <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.1 }}
-          className="mt-5 text-lg sm:text-xl text-gray-400 max-w-xl mx-auto leading-relaxed">
+          className="mt-5 text-lg sm:text-xl text-[#c5d9db] max-w-xl mx-auto lg:mx-0 leading-relaxed">
           Tell us what you need in plain language.
           We figure out the path. You finish on the official portal.
         </motion.p>
 
         {/* Search box */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.15 }}
-          className="mt-10 max-w-2xl mx-auto">
-          <div className="relative flex items-end gap-0 bg-white/5 border border-white/10 hover:border-brand-500/50 focus-within:border-brand-500/70 focus-within:ring-2 focus-within:ring-brand-500/20 rounded-2xl transition-all duration-300 p-1.5">
+          className="mt-10 max-w-2xl mx-auto lg:mx-0">
+          <div className="relative flex items-end gap-0 bg-white/[0.09] border border-white/20 hover:border-[#39bdb6]/70 focus-within:border-[#39bdb6] focus-within:ring-4 focus-within:ring-[#39bdb6]/15 rounded-2xl transition-all duration-300 p-1.5 shadow-2xl shadow-[#022b32]/25">
             <textarea
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -94,20 +95,20 @@ export function HeroSection() {
             <button
               onClick={go}
               disabled={!query.trim()}
-              className="shrink-0 flex items-center gap-2 bg-brand-500 hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-3 rounded-xl transition-all duration-200"
+              className="shrink-0 flex items-center gap-2 bg-[#0B8C92] hover:bg-[#15a6aa] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-[#022b32]/25"
             >
               Get help <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-xs text-gray-600 mt-2.5 text-center">Ask in English · हिन्दी · ಕನ್ನಡ</p>
+          <p className="text-xs text-[#a8c5c8] mt-2.5 text-center lg:text-left">Ask in English · हिन्दी · ಕನ್ನಡ</p>
         </motion.div>
 
         {/* Service chips */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.25 }}
-          className="mt-8 flex flex-wrap justify-center gap-2">
+          className="mt-8 flex flex-wrap justify-center lg:justify-start gap-2">
           {CHIPS.map((chip) => (
             <button key={chip.label} onClick={() => router.push(`/chat?q=${encodeURIComponent(chip.label)}`)}
-              className="flex items-center gap-1.5 text-sm text-gray-300 bg-white/5 border border-white/10 hover:border-brand-500/50 hover:bg-brand-500/10 hover:text-brand-300 px-3.5 py-1.5 rounded-full transition-all duration-200">
+              className="flex items-center gap-1.5 text-sm text-[#d6e8e9] bg-white/[0.07] border border-white/15 hover:border-[#39bdb6]/60 hover:bg-[#087477]/40 hover:text-white px-3.5 py-1.5 rounded-full transition-all duration-200">
               <chip.icon className="w-3.5 h-3.5" /> {chip.label}
             </button>
           ))}
@@ -115,7 +116,7 @@ export function HeroSection() {
 
         {/* Trust bar */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.35 }}
-          className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-500">
+          className="mt-12 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-[#b2c8ca]">
           {[
             { icon: ShieldCheck, text: "Verified information" }, { icon: LockKeyhole, text: "No credentials collected" },
             { icon: Zap, text: "Clear next steps" }, { icon: BadgeCheck, text: "Free for citizens" },
@@ -130,18 +131,27 @@ export function HeroSection() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }}
           className="mt-6">
           <Link href="/onboarding"
-            className="inline-flex items-center gap-2 text-sm text-brand-400 hover:text-brand-300 border border-brand-500/30 hover:border-brand-400/50 px-5 py-2 rounded-full transition-all">
+            className="inline-flex items-center gap-2 text-sm text-[#d2fbf6] hover:text-white border border-[#39bdb6]/40 hover:border-[#39bdb6]/70 px-5 py-2 rounded-full transition-all">
             <Sparkles className="w-3.5 h-3.5" />
             Personalize your experience for better results
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </motion.div>
+        </div>
+
+        <motion.aside initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.18 }} className="hidden lg:block rounded-[2rem] border border-white/20 bg-white/[0.09] p-6 text-left shadow-2xl shadow-[#022b32]/35 backdrop-blur-xl">
+          <div className="flex items-center justify-between"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#39bdb6]/20 text-[#bff5ef]"><Landmark className="h-5 w-5" /></div><div><p className="font-semibold text-white">Your guidance, organized</p><p className="text-xs text-[#b2c8ca]">Verified sources clearly labelled</p></div></div><BadgeCheck className="h-5 w-5 text-[#6ee7b7]" /></div>
+          <div className="mt-7 space-y-3">
+            {["Choose the service you need", "Answer only safe, relevant questions", "Get clear next steps and an official link"].map((item, index) => <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#022b32]/25 px-4 py-3"><span className="grid h-6 w-6 place-items-center rounded-full bg-[#0B8C92] text-xs font-bold text-white">{index + 1}</span><span className="text-sm text-[#e3f0f1]">{item}</span></div>)}
+          </div>
+          <div className="mt-5 flex items-center gap-2 rounded-xl border border-[#6ee7b7]/20 bg-[#6ee7b7]/10 px-3 py-2.5 text-xs text-[#d6fff1]"><ShieldCheck className="h-4 w-4 shrink-0" />We never request identity numbers, passwords, or OTPs.</div>
+        </motion.aside>
       </div>
 
       {/* ── Bottom wave ── */}
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none" aria-hidden>
         <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-          <path d="M0 60 L0 30 Q360 0 720 30 Q1080 60 1440 30 L1440 60 Z" fill="#f9fafb"/>
+          <path d="M0 60 L0 30 Q360 0 720 30 Q1080 60 1440 30 L1440 60 Z" fill="#EFFCFB"/>
         </svg>
       </div>
     </section>

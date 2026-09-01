@@ -321,20 +321,20 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   };
 
   return (
-    <div className={`w-full max-w-xl mx-auto ${isModal ? "p-4 sm:p-6" : "min-h-screen bg-[radial-gradient(ellipse_at_top,_#0e5961_0%,_#062f38_38%,_#041b26_100%)] flex flex-col items-center justify-center px-4 py-8"}`}>
+    <div className={`w-full max-w-xl mx-auto ${isModal ? "p-4 sm:p-6" : "min-h-screen bg-[radial-gradient(ellipse_at_top,_#0B8C92_0%,_#073E45_45%,_#022b32_100%)] flex flex-col items-center justify-center px-4 py-8"}`}>
       {/* Glow */}
       {!isModal && (
         <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
-          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-cyan-300/10 rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 -left-20 w-80 h-80 bg-brand-500/20 rounded-full blur-[100px]" />
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#8ef3eb]/15 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 -left-20 w-80 h-80 bg-[#087477]/45 rounded-full blur-[100px]" />
         </div>
       )}
 
-      <div className={`relative z-10 w-full ${isModal ? "" : "bg-slate-950/35 border border-white/15 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-cyan-950/40"}`}>
+      <div className={`relative z-10 w-full ${isModal ? "" : "bg-[#073E45]/80 border border-white/20 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-[#022b32]/50"}`}>
         {!isModal && (
           <div className="flex items-center gap-3 mb-7">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-300 to-brand-500 text-white flex items-center justify-center shadow-lg shadow-brand-500/30"><ShieldCheck className="w-6 h-6" /></div>
-            <div><p className="font-bold text-white tracking-tight">CivicPath Karnataka</p><p className="text-xs text-cyan-100/70">A clearer path to public services</p></div>
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#39bdb6] to-[#087477] text-white flex items-center justify-center shadow-lg shadow-[#022b32]/40"><ShieldCheck className="w-6 h-6" /></div>
+            <div><p className="font-bold text-white tracking-tight">CivicPath Karnataka</p><p className="text-xs text-[#bff5ef]/80">A clearer path to public services</p></div>
           </div>
         )}
         {!isModal && (
@@ -346,7 +346,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
         {/* Progress Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold tracking-wider text-brand-400 uppercase">
+            <span className="text-xs font-semibold tracking-wider text-[#8ef3eb] uppercase">
               Step {stepIdx + 1} of {totalSteps}
             </span>
             <button
@@ -358,7 +358,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
           </div>
           <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-cyan-300 via-brand-400 to-brand-500 rounded-full"
+              className="h-full bg-gradient-to-r from-[#8ef3eb] via-[#39bdb6] to-[#0B8C92] rounded-full"
               animate={{ width: `${progress * 100}%` }}
               transition={{ duration: 0.35, ease: "easeOut" }}
             />
@@ -582,13 +582,13 @@ function OptionCard({
       className={`w-full flex items-center gap-3 rounded-2xl border text-left transition-all duration-200
         ${compact ? "p-3" : "px-4 py-3.5"}
         ${selected
-          ? "border-brand-500 bg-brand-500/20 shadow-[0_0_0_3px_rgba(79,110,247,0.2)]"
+          ? "border-[#39bdb6] bg-[#087477]/35 shadow-[0_0_0_3px_rgba(57,189,182,0.18)]"
           : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
         }`}
     >
       {children}
       {selected && (
-        <span className="ml-auto shrink-0 w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center shadow-sm">
+        <span className="ml-auto shrink-0 w-5 h-5 rounded-full bg-[#0B8C92] flex items-center justify-center shadow-sm">
           <Check className="w-3 h-3 text-white" strokeWidth={3} />
         </span>
       )}
