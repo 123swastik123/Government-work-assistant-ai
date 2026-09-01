@@ -8,20 +8,20 @@ import { FloatingAssistant } from "@/components/assistant/FloatingAssistant";
 
 export const metadata: Metadata = {
   title: {
-    default: "Government Work Helper",
-    template: "%s | Government Work Helper",
+    default: "CivicPath Karnataka",
+    template: "%s | CivicPath Karnataka",
   },
   description:
-    "Free AI-powered citizen guidance for Karnataka government services — Aadhaar, PAN, Driving Licence, Certificates, and more. Tell us what you need. We'll show you the path.",
+    "Clear, personalized citizen guidance for Karnataka government services. We explain the path; official portals complete the transaction.",
   keywords: ["government", "Karnataka", "Aadhaar", "PAN", "driving licence", "certificates", "citizen services", "India"],
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   openGraph: {
-    title: "Government Work Helper",
+    title: "CivicPath Karnataka",
     description: "Tell us what you need. We'll show you the path.",
     type: "website",
     locale: "en_IN",
   },
-  twitter: { card: "summary_large_image", title: "Government Work Helper" },
+  twitter: { card: "summary_large_image", title: "CivicPath Karnataka" },
   robots: { index: true, follow: true },
 };
 

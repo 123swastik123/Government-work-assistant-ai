@@ -27,6 +27,7 @@ interface MatchedService {
 function ChatInterfaceInner() {
   const searchParams = useSearchParams();
   const initialQ = searchParams.get("q") ?? "";
+  const requestedService = searchParams.get("service_slug") ?? undefined;
   const { guestProfile, user, language } = useApp();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,7 +56,15 @@ function ChatInterfaceInner() {
       const body: Record<string, unknown> = {
         message: text.trim(),
         language,
+        guest_profile: {
+          state: guestProfile.state,
+          age_bracket: guestProfile.age_bracket,
+          category: guestProfile.category,
+          location_type: guestProfile.location_type ?? null,
+          collected_answers: guestProfile.collected_answers,
+        },
       };
+      if (requestedService) body.service_slug = requestedService;
       if (conversationId) body.conversation_id = conversationId;
       if (!user) body.guest_session_id = guestProfile.guest_session_id;
 
@@ -91,7 +100,7 @@ function ChatInterfaceInner() {
     } finally {
       setLoading(false);
     }
-  }, [loading, conversationId, guestProfile.guest_session_id, user, language]);
+  }, [loading, conversationId, guestProfile, user, language, requestedService]);
 
   useEffect(() => {
     if (initialQ && !sentInitial.current) {
@@ -120,7 +129,7 @@ function ChatInterfaceInner() {
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h1 className="font-semibold text-gray-900 text-sm sm:text-base">Government Work Helper</h1>
+            <h1 className="font-semibold text-gray-900 text-sm sm:text-base">CivicPath Guide</h1>
             <p className="text-xs text-gray-400 hidden sm:block">Karnataka government services · Ask anything</p>
           </div>
         </div>

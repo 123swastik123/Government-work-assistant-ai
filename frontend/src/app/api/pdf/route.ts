@@ -7,6 +7,7 @@ import { PDFRequestSchema } from "@/lib/validation/schemas";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { getSeededServiceBySlug } from "@/lib/services/seed-data";
 import type { Language, Service } from "@/types";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 type SvcPdfData = Pick<Service, "id" | "name" | "slug" | "official_url" | "steps" | "questions" | "last_verified_on" | "verification_status">;
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     let svc: SvcPdfData | null = null;
 
-    try {
+    if (isSupabaseConfigured()) try {
       const supabase = await createClient();
       const { data: service, error } = await supabase
         .from("services")

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { evaluateEligibility, getApplicableDocuments } from "@/lib/ai/eligibility-engine";
+import { getSeededServiceBySlug } from "@/lib/services/seed-data";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { Service } from "@/types";
 
 const RequestSchema = z.object({ service_slug: z.string().max(100), answers: z.record(z.unknown()) });
@@ -12,11 +14,18 @@ export async function POST(req: NextRequest) {
     const parsed = RequestSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
 
-    const supabase = await createClient();
-    const { data: service } = await supabase.from("services").select("id,eligibility_rules,required_documents,conditional_documents,questions").eq("slug", parsed.data.service_slug).eq("active", true).single();
+    let service: Pick<Service, "id" | "eligibility_rules" | "required_documents" | "conditional_documents" | "questions"> | null = null;
+    if (isSupabaseConfigured()) try {
+      const supabase = await createClient();
+      const { data } = await supabase.from("services").select("id,eligibility_rules,required_documents,conditional_documents,questions").eq("slug", parsed.data.service_slug).eq("active", true).single();
+      service = data as typeof service;
+    } catch {
+      // Local guest mode uses the same verified seed records as service pages.
+    }
+    if (!service) service = getSeededServiceBySlug(parsed.data.service_slug);
     if (!service) return NextResponse.json({ success: false, error: "Service not found" }, { status: 404 });
 
-    const svc = service as Pick<Service, "id" | "eligibility_rules" | "required_documents" | "conditional_documents" | "questions">;
+    const svc = service;
     const eligibilityResult = evaluateEligibility(svc.eligibility_rules, parsed.data.answers);
     const applicableDocuments = getApplicableDocuments(svc.required_documents, svc.conditional_documents, parsed.data.answers);
 

@@ -33,8 +33,8 @@ export function Navbar() {
             <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-700 rounded-lg flex items-center justify-center shadow-sm">
               <Shield className="w-4 h-4 text-white" />
             </div>
-            <span className="hidden sm:inline">Government Work Helper</span>
-            <span className="sm:hidden font-extrabold text-brand-600">GWH</span>
+            <span className="hidden sm:inline">CivicPath Karnataka</span>
+            <span className="sm:hidden font-extrabold text-brand-600">CivicPath</span>
           </Link>
 
           {/* Desktop nav */}

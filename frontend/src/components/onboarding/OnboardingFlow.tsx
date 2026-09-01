@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ArrowRight, SkipForward, Check, Sparkles } from "lucide-react";
+import { ChevronLeft, ArrowRight, SkipForward, Check, Sparkles, Building2, MapPin, ShieldCheck } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { getSeededServiceBySlug, SEED_SERVICES } from "@/lib/services/seed-data";
 import { t } from "@/lib/utils";
@@ -92,6 +92,7 @@ function useLabels(lang: Language) {
       finish: "Finish Setup",
       q_lang: "Which language feels most comfortable?",
       q_state: "Where are you getting this done?",
+      q_location: "Which area best describes where you live?",
       q_age: "What age group are you in?",
       q_cat: "What are you here to get done?",
       q_service: "Which specific service do you need?",
@@ -105,6 +106,7 @@ function useLabels(lang: Language) {
       finish: "समाप्त करें",
       q_lang: "आप किस भाषा में सहज हैं?",
       q_state: "आप कहाँ से काम करवाना चाहते हैं?",
+      q_location: "आप किस क्षेत्र में रहते हैं?",
       q_age: "आपकी आयु वर्ग क्या है?",
       q_cat: "आप क्या काम करवाना चाहते हैं?",
       q_service: "आपको कौन सी सेवा चाहिए?",
@@ -118,6 +120,7 @@ function useLabels(lang: Language) {
       finish: "ಪೂರ್ಣಗೊಳಿಸಿ",
       q_lang: "ನಿಮಗೆ ಯಾವ ಭಾಷೆ ಹೆಚ್ಚು ಅನುಕೂಲ?",
       q_state: "ನೀವು ಎಲ್ಲಿ ಕೆಲಸ ಮಾಡಿಸಿಕೊಳ್ಳಬೇಕು?",
+      q_location: "ನೀವು ಯಾವ ಪ್ರದೇಶದಲ್ಲಿ ವಾಸಿಸುತ್ತೀರಿ?",
       q_age: "ನಿಮ್ಮ ವಯಸ್ಸಿನ ಗುಂಪು ಯಾವುದು?",
       q_cat: "ನೀವು ಯಾವ ಕೆಲಸ ಮಾಡಿಸಿಕೊಳ್ಳಬೇಕು?",
       q_service: "ನಿಮಗೆ ಯಾವ ನಿರ್ದಿಷ್ಟ ಸೇವೆ ಬೇಕು?",
@@ -143,6 +146,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   const [direction, setDirection] = useState(1);
   const [selectedLang, setSelectedLang] = useState<Language>(currentLang ?? "en");
   const [selectedAge, setSelectedAge] = useState<AgeGroup | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<"urban" | "rural" | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedServiceSlug, setSelectedServiceSlug] = useState<string | null>(null);
   const [serviceAnswers, setServiceAnswers] = useState<Record<string, unknown>>({});
@@ -152,6 +156,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     if (guestProfile) {
       if (guestProfile.language) setSelectedLang(guestProfile.language);
       if (guestProfile.age_bracket) setSelectedAge(guestProfile.age_bracket);
+      if (guestProfile.location_type) setSelectedLocation(guestProfile.location_type);
       if (guestProfile.category) setSelectedCategory(guestProfile.category);
       if (guestProfile.collected_answers) setServiceAnswers(guestProfile.collected_answers);
     }
@@ -175,7 +180,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   const categoryServices = selectedCategory ? (CATEGORY_SERVICES[selectedCategory] ?? []) : [];
 
   const totalSteps = useMemo(() => {
-    let count = 4; // lang, state, age, category
+    let count = 5; // language, state, location, age, category
     if (categoryServices.length > 0) {
       count += 1; // service selection step
       if (selectedServiceSlug && serviceQuestions.length > 0) {
@@ -188,7 +193,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   const goNext = () => {
     setDirection(1);
     // If at category step and no services, finish
-    if (stepIdx === 3 && categoryServices.length === 0) {
+    if (stepIdx === 4 && categoryServices.length === 0) {
       finish();
       return;
     }
@@ -208,6 +213,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     updateGuestProfile({
       language: selectedLang,
       age_bracket: selectedAge,
+      location_type: selectedLocation,
       category: selectedCategory,
       collected_answers: serviceAnswers,
     });
@@ -221,6 +227,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     updateGuestProfile({
       language: selectedLang,
       age_bracket: selectedAge,
+      location_type: selectedLocation,
       category: selectedCategory,
       collected_answers: serviceAnswers,
     });
@@ -228,9 +235,9 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
     markOnboarded();
     if (onComplete) {
       onComplete();
-      if (selectedServiceSlug) router.push(`/services/${selectedServiceSlug}`);
+      if (selectedServiceSlug) router.push(`/chat?q=${encodeURIComponent(`Guide me on ${selectedService?.name.en ?? "this service"}`)}&service_slug=${selectedServiceSlug}`);
     } else if (selectedServiceSlug) {
-      router.push(`/services/${selectedServiceSlug}`);
+      router.push(`/chat?q=${encodeURIComponent(`Guide me on ${selectedService?.name.en ?? "this service"}`)}&service_slug=${selectedServiceSlug}`);
     } else {
       router.push(redirectTo);
     }
@@ -244,6 +251,11 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
 
   const pickAge = (age: AgeGroup) => {
     setSelectedAge(age);
+    setTimeout(goNext, 250);
+  };
+
+  const pickLocation = (location: "urban" | "rural") => {
+    setSelectedLocation(location);
     setTimeout(goNext, 250);
   };
 
@@ -269,17 +281,18 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   };
 
   // Determine current step view
-  let currentStepView: "language" | "state" | "age" | "category" | "service" | "dynamic_question" = "language";
+  let currentStepView: "language" | "state" | "location" | "age" | "category" | "service" | "dynamic_question" = "language";
   let activeQuestion: ServiceQuestion | null = null;
 
   if (stepIdx === 0) currentStepView = "language";
   else if (stepIdx === 1) currentStepView = "state";
-  else if (stepIdx === 2) currentStepView = "age";
-  else if (stepIdx === 3) currentStepView = "category";
-  else if (stepIdx === 4 && categoryServices.length > 0) currentStepView = "service";
-  else if (stepIdx >= 5 && serviceQuestions.length > 0) {
+  else if (stepIdx === 2) currentStepView = "location";
+  else if (stepIdx === 3) currentStepView = "age";
+  else if (stepIdx === 4) currentStepView = "category";
+  else if (stepIdx === 5 && categoryServices.length > 0) currentStepView = "service";
+  else if (stepIdx >= 6 && serviceQuestions.length > 0) {
     currentStepView = "dynamic_question";
-    activeQuestion = serviceQuestions[stepIdx - 5] ?? null;
+    activeQuestion = serviceQuestions[stepIdx - 6] ?? null;
   }
 
   const progress = Math.min((stepIdx + 1) / Math.max(totalSteps, 1), 1);
@@ -291,15 +304,22 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   };
 
   return (
-    <div className={`w-full max-w-lg mx-auto ${isModal ? "p-4 sm:p-6" : "min-h-screen bg-gradient-to-br from-[#0a0f1e] via-[#0d1326] to-[#0a0f1e] flex flex-col items-center justify-center px-4 py-8"}`}>
+    <div className={`w-full max-w-xl mx-auto ${isModal ? "p-4 sm:p-6" : "min-h-screen bg-[radial-gradient(ellipse_at_top,_#0e5961_0%,_#062f38_38%,_#041b26_100%)] flex flex-col items-center justify-center px-4 py-8"}`}>
       {/* Glow */}
       {!isModal && (
         <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-brand-600/15 rounded-full blur-[100px]" />
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-cyan-300/10 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 -left-20 w-80 h-80 bg-brand-500/20 rounded-full blur-[100px]" />
         </div>
       )}
 
-      <div className={`relative z-10 w-full ${isModal ? "" : "bg-white/5 border border-white/10 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl"}`}>
+      <div className={`relative z-10 w-full ${isModal ? "" : "bg-slate-950/35 border border-white/15 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-cyan-950/40"}`}>
+        {!isModal && (
+          <div className="flex items-center gap-3 mb-7">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-300 to-brand-500 text-white flex items-center justify-center shadow-lg shadow-brand-500/30"><ShieldCheck className="w-6 h-6" /></div>
+            <div><p className="font-bold text-white tracking-tight">CivicPath Karnataka</p><p className="text-xs text-cyan-100/70">A clearer path to public services</p></div>
+          </div>
+        )}
         {/* Progress Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
@@ -315,7 +335,7 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
           </div>
           <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-brand-500 via-purple-400 to-brand-400 rounded-full"
+              className="h-full bg-gradient-to-r from-cyan-300 via-brand-400 to-brand-500 rounded-full"
               animate={{ width: `${progress * 100}%` }}
               transition={{ duration: 0.35, ease: "easeOut" }}
             />
@@ -368,6 +388,22 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
                       Selected
                     </span>
                   </OptionCard>
+                </StepShell>
+              )}
+
+              {/* 3. Location type — helps tailor online/offline guidance */}
+              {currentStepView === "location" && (
+                <StepShell title={L.q_location} subtitle="This only helps us explain the most relevant route. We do not ask for your address.">
+                  <div className="grid grid-cols-2 gap-3">
+                    <OptionCard selected={selectedLocation === "urban"} onClick={() => pickLocation("urban")}>
+                      <Building2 className="w-6 h-6 text-brand-300" />
+                      <div><p className="font-bold text-white text-sm">City / Town</p><p className="text-xs text-gray-400">Urban area</p></div>
+                    </OptionCard>
+                    <OptionCard selected={selectedLocation === "rural"} onClick={() => pickLocation("rural")}>
+                      <MapPin className="w-6 h-6 text-brand-300" />
+                      <div><p className="font-bold text-white text-sm">Village / Rural</p><p className="text-xs text-gray-400">Rural area</p></div>
+                    </OptionCard>
+                  </div>
                 </StepShell>
               )}
 
@@ -501,10 +537,11 @@ function OnboardingFlowInner({ onComplete, isModal = false }: OnboardingFlowProp
   );
 }
 
-function StepShell({ title, children }: { title: string; children: React.ReactNode }) {
+function StepShell({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <div>
       <h2 className="text-lg sm:text-xl font-bold text-white mb-5 leading-snug">{title}</h2>
+      {subtitle && <p className="text-sm text-gray-400 -mt-3 mb-5 leading-relaxed">{subtitle}</p>}
       <div>{children}</div>
     </div>
   );

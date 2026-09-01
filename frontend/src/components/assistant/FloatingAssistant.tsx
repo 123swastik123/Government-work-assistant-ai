@@ -75,7 +75,7 @@ export function FloatingAssistant() {
     (path: string, label: string): string => {
       const allowed = Object.values(ALLOWED_NAV);
       if (!allowed.includes(path) && !allowed.some((r) => path.startsWith(r + "/"))) {
-        return "I can only navigate within Government Work Helper.";
+        return "I can only navigate within CivicPath Karnataka.";
       }
       router.push(path);
       trackEvent("assistant_navigated", { action: path });
@@ -188,6 +188,13 @@ export function FloatingAssistant() {
         const body: Record<string, unknown> = {
           message: text.trim(),
           language,
+          guest_profile: {
+            state: guestProfile.state,
+            age_bracket: guestProfile.age_bracket,
+            category: guestProfile.category,
+            location_type: guestProfile.location_type ?? null,
+            collected_answers: guestProfile.collected_answers,
+          },
         };
         if (currentServiceSlug) body.service_slug = currentServiceSlug;
         if (convId) body.conversation_id = convId;
@@ -249,7 +256,7 @@ export function FloatingAssistant() {
             transition={{ type: "spring", damping: 16, stiffness: 260 }}
             onClick={() => { setOpen(true); setMinimized(false); }}
             className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-full pl-4 pr-5 py-3 shadow-xl shadow-brand-500/30 transition-colors"
-            aria-label="Open Government Work Helper assistant"
+            aria-label="Open CivicPath assistant"
           >
             <MessageCircle className="w-5 h-5" />
             <span className="text-sm font-semibold">Ask Assistant</span>
@@ -279,7 +286,7 @@ export function FloatingAssistant() {
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 leading-tight">GWH AI Assistant</p>
+                  <p className="text-sm font-bold text-gray-900 leading-tight">CivicPath Guide</p>
                   <p className="text-[10px] text-gray-500 truncate max-w-[170px]">
                     {currentServiceSlug ? `Guiding: ${currentServiceSlug}` : pathname}
                   </p>

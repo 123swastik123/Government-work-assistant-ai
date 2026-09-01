@@ -12,7 +12,7 @@ export function Footer() {
               <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
                 <Shield className="w-4 h-4 text-white" />
               </div>
-              <span className="font-bold text-gray-900">Government Work Helper</span>
+              <span className="font-bold text-gray-900">CivicPath Karnataka</span>
             </div>
             <p className="text-sm text-gray-500 max-w-sm leading-relaxed">
               An independent citizen guidance platform. We explain government processes. 
@@ -56,7 +56,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-400">
-            © {new Date().getFullYear()} Government Work Helper. Free for citizens.
+            © {new Date().getFullYear()} CivicPath Karnataka. Free for citizens.
           </p>
           <p className="text-xs text-gray-400">
             Karnataka pilot · More states coming soon

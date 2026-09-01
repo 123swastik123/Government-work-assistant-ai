@@ -4,12 +4,13 @@ import { getSeededServiceBySlug } from "@/lib/services/seed-data";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { Service } from "@/types";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 interface Props { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  try {
+  if (isSupabaseConfigured()) try {
     const supabase = await createClient();
     const { data } = await supabase.from("services").select("name").eq("slug", slug).single();
     if (data?.name) {
@@ -30,7 +31,7 @@ export default async function ServicePage({ params }: Props) {
 
   let serviceData: Service | null = null;
 
-  try {
+  if (isSupabaseConfigured()) try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("services")

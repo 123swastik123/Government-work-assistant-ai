@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getOrCreateGuestSession, saveGuestSession } from "@/lib/session/guest";
 import type { User } from "@supabase/supabase-js";
 import type { GuestProfile, Language } from "@/types";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 const ONBOARDING_KEY = "gwh_onboarding_done";
 
@@ -13,6 +14,7 @@ const DEFAULT_GUEST_PROFILE: GuestProfile = {
   state: "karnataka",
   age_bracket: null,
   category: null,
+  location_type: null,
   collected_answers: {},
 };
 
@@ -38,6 +40,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   // Sync localStorage & auth on mount
   useEffect(() => {
+    // Keep guest mode fast and reliable when a local developer has not yet
+    // configured Supabase; never issue requests to placeholder domains.
+    if (!isSupabaseConfigured()) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const session = getOrCreateGuestSession();
       setGuestProfile(session);

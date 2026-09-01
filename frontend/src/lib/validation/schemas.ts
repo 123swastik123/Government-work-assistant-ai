@@ -30,6 +30,15 @@ export const ChatRequestSchema = z.object({
   guest_session_id: z.string().uuid().optional(),
   service_slug: z.string().max(100).optional(),
   language: LanguageSchema.optional(),
+  // Non-sensitive context collected during onboarding. Never includes identity
+  // numbers, contact details, passwords, OTPs, or an address.
+  guest_profile: z.object({
+    state: StateSchema.optional(),
+    age_bracket: AgeGroupSchema.nullable().optional(),
+    category: z.string().max(100).nullable().optional(),
+    location_type: z.enum(["urban", "rural"]).nullable().optional(),
+    collected_answers: z.record(z.unknown()).optional(),
+  }).optional(),
 });
 
 // ─── Search ───────────────────────────────────────────────────

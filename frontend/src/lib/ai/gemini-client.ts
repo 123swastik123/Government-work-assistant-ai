@@ -14,8 +14,9 @@ export const AIResponseSchema = z.object({
   suggest_for_review: z.object({ suggested_name: z.string().min(1), suggested_category: z.string().min(1) }).nullable(),
 });
 
-// Current free-tier Google Gemini models: gemini-1.5-flash / gemini-2.0-flash
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+// Keep a current stable server-side default. Vercel may override this with
+// GEMINI_MODEL, but a missing variable must not fall back to a retired model.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 const TIMEOUT_MS = 25_000;
 const MAX_RETRIES = 2;
 

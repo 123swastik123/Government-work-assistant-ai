@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The application lives in a nested frontend directory. Pinning this prevents
+  // Turbopack from walking up to unrelated Windows package-lock files.
+  turbopack: { root: __dirname },
   serverExternalPackages: ["pdf-lib"],
   images: {
     remotePatterns: [

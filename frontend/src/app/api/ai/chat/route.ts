@@ -8,6 +8,7 @@ import { runKeywordPipeline } from "@/lib/ai/matching-pipeline";
 import { buildServiceContext } from "@/lib/ai/system-prompt";
 import { getSeededServices, getSeededServiceBySlug } from "@/lib/services/seed-data";
 import type { Language, Service } from "@/types";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,10 +17,11 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
-    const { message, conversation_id, guest_session_id, service_slug, language } = parsed.data;
+    const { message, conversation_id, guest_session_id, service_slug, language, guest_profile } = parsed.data;
+    const databaseConfigured = isSupabaseConfigured();
 
     let user = null;
-    try {
+    if (databaseConfigured) try {
       const supabase = await createClient();
       const authRes = await supabase.auth.getUser();
       user = authRes.data.user;
@@ -31,10 +33,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Auth or guest session required" }, { status: 401 });
     }
 
-    let userProfile: Record<string, unknown> = {};
+    let userProfile: Record<string, unknown> = guest_profile ?? {};
     let resolvedLanguage: Language = language ?? "en";
 
-    if (user) {
+    if (user && databaseConfigured) {
       try {
         const supabase = await createClient();
         const { data: profile } = await supabase
@@ -51,10 +53,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const admin = getAdminClient();
+    const admin = databaseConfigured ? getAdminClient() : null;
     let convId = conversation_id ?? crypto.randomUUID();
 
-    try {
+    if (admin) try {
       if (!conversation_id) {
         const { data: conv } = await admin
           .from("conversations")
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest) {
     }
 
     let conversationHistory: Array<{ role: "user" | "assistant"; content: string }> = [];
-    try {
+    if (admin) try {
       const { data: messages } = await admin
         .from("conversation_messages")
         .select("role,content")
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
     }
 
     const slugToId: Record<string, string> = {};
-    try {
+    if (admin) try {
       const { data: allServices } = await admin.from("services").select("id,slug").eq("active", true);
       if (allServices && allServices.length > 0) {
         (allServices as Array<{ id: string; slug: string }>).forEach((s) => { slugToId[s.slug] = s.id; });
@@ -109,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     let serviceCtx = null;
     if (resolvedSlug) {
-      try {
+      if (admin) try {
         const { data: svc } = await admin.from("services").select("*").eq("slug", resolvedSlug).eq("active", true).single();
         if (svc) matchedService = svc as Service;
       } catch {
@@ -127,7 +129,7 @@ export async function POST(req: NextRequest) {
         serviceCtx = buildServiceContext(matchedService, eligResult, resolvedLanguage);
         serviceCtx.applicable_documents = applicableDocs;
 
-        try {
+        if (admin) try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await admin.from("conversations").update({ matched_service_id: matchedService.id } as any).eq("id", convId);
         } catch {
@@ -157,7 +159,7 @@ export async function POST(req: NextRequest) {
     if (aiResponse.matched_service_id) {
       const isValid = getSeededServices().some((s) => s.id === aiResponse.matched_service_id);
       if (!isValid) {
-        try {
+        if (admin) try {
           const { data: validSvc } = await admin.from("services").select("id").eq("id", aiResponse.matched_service_id).eq("active", true).single();
           if (!validSvc) aiResponse.matched_service_id = null;
         } catch {
@@ -166,7 +168,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    try {
+    if (admin) try {
       await admin.from("conversation_messages")
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert([

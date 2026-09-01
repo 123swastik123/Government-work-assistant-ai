@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SearchRequestSchema } from "@/lib/validation/schemas";
 import { runKeywordPipeline, normalizeInput } from "@/lib/ai/matching-pipeline";
 import { getSeededServices } from "@/lib/services/seed-data";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export async function GET(req: NextRequest) {
   try {
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
       last_verified_on: string | null;
     }> = [];
 
-    try {
+    if (isSupabaseConfigured()) try {
       const supabase = await createClient();
       const { data: kwResults } = await supabase.rpc("search_services_by_keyword", { search_query: q, filter_state: "karnataka", result_limit: limit });
       if (kwResults && kwResults.length > 0) results = kwResults;

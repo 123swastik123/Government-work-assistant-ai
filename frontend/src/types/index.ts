@@ -165,6 +165,7 @@ export interface GuestProfile {
   state: State;
   age_bracket: AgeGroup | null;
   category: string | null;
+  location_type?: "urban" | "rural" | null;
   collected_answers: Record<string, unknown>;
 }
 

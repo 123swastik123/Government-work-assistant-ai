@@ -51,10 +51,10 @@ export function HeroSection() {
       </svg>
 
       {/* ── Floating document SVGs ── */}
-      <FloatingDoc className="absolute top-24 left-[8%] opacity-30 hidden lg:block" rotation={-12} color="#4f6ef7" label="ID" />
-      <FloatingDoc className="absolute top-40 right-[10%] opacity-25 hidden lg:block" rotation={10} color="#a855f7" label="RC" />
-      <FloatingDoc className="absolute bottom-32 left-[15%] opacity-20 hidden xl:block" rotation={6} color="#f97316" label="PAN" />
-      <FloatingDoc className="absolute bottom-20 right-[8%] opacity-20 hidden xl:block" rotation={-8} color="#22c55e" label="DL" />
+      <FloatingDoc className="absolute top-24 left-[8%] opacity-30 hidden lg:block" rotation={-12} duration={4} color="#39bdb6" label="ID" />
+      <FloatingDoc className="absolute top-40 right-[10%] opacity-25 hidden lg:block" rotation={10} duration={5} color="#58c6ff" label="RC" />
+      <FloatingDoc className="absolute bottom-32 left-[15%] opacity-20 hidden xl:block" rotation={6} duration={6} color="#f0a44b" label="PAN" />
+      <FloatingDoc className="absolute bottom-20 right-[8%] opacity-20 hidden xl:block" rotation={-8} duration={5.5} color="#45c68a" label="DL" />
 
       {/* ── Content ── */}
       <div className="relative z-10 w-full max-w-4xl mx-auto text-center">
@@ -71,7 +71,7 @@ export function HeroSection() {
           className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] tracking-tight">
           Government work,
           <br />
-          <span className="bg-gradient-to-r from-brand-400 via-purple-400 to-brand-300 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-brand-300 via-cyan-300 to-brand-400 bg-clip-text text-transparent">
             made simple.
           </span>
         </motion.h1>
@@ -154,12 +154,12 @@ export function HeroSection() {
   );
 }
 
-function FloatingDoc({ className, rotation, color, label }: { className: string; rotation: number; color: string; label: string }) {
+function FloatingDoc({ className, rotation, duration, color, label }: { className: string; rotation: number; duration: number; color: string; label: string }) {
   return (
     <motion.div
       className={className}
       animate={{ y: [0, -10, 0], rotate: [rotation - 1, rotation + 1, rotation - 1] }}
-      transition={{ duration: 4 + Math.random() * 2, repeat: Infinity, ease: "easeInOut" }}
+      transition={{ duration, repeat: Infinity, ease: "easeInOut" }}
     >
       <svg width="64" height="80" viewBox="0 0 64 80" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="64" height="80" rx="8" fill={color} fillOpacity="0.15"/>

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSeededServices } from "@/lib/services/seed-data";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
     const tier = searchParams.get("tier");
     const limit = Math.min(parseInt(searchParams.get("limit") ?? "50"), 100);
 
-    try {
+    if (isSupabaseConfigured()) try {
       const supabase = await createClient();
       let query = supabase
         .from("services")
